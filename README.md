@@ -40,7 +40,7 @@ Para o desenvolvimento deste MVP, o cronograma será dividido em sprints rápida
     * Setup do Vue.js (Vue Router/Pinia).
     * Criação das telas de listagem e cadastro.
     * Consumo da API.
-3.  **Polimento & Deploy** te amo <3
+3.  **Polimento & Deploy**
     * Refinamento da UI/UX.
     * Tratamento de erros e validações.
     * Documentação final.
