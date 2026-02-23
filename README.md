@@ -1,4 +1,4 @@
-# ImplantaFlow - CRM para Analistas de Implantação
+# Onboardly - CRM para Analistas de Implantação
 
 ## 📌 Domínio do Problema
 O projeto consiste em um CRM simplificado focado na dor do **Analista de Implantação**. Diferente de CRMs de vendas, este sistema foca no acompanhamento do cliente *pós-venda*, durante a fase técnica de configuração, treinamento e entrega de software.
