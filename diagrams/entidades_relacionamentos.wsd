@@ -1,0 +1,58 @@
+@startuml
+!theme plain
+skinparam linetype ortho
+
+title DER Analítico - CRM de Implantação (Onboardly)
+
+entity "Analista" as analista {
+  * id : UUID <<PK>>
+  --
+  * nome : VARCHAR(100)
+  * email : VARCHAR(100)
+}
+
+entity "Cliente" as cliente {
+  * id : UUID <<PK>>
+  --
+  * nome_fantasia : VARCHAR(150)
+  * cnpj : VARCHAR(14)
+}
+
+entity "Projeto_Implantacao" as projeto {
+  * id : UUID <<PK>>
+  --
+  * cliente_id : UUID <<FK>>
+  * analista_id : UUID <<FK>>
+  * data_contratacao : DATE <<Importante para Safra>>
+  data_ativacao : DATE
+  * status_ativacao : BOOLEAN <<Ativo/Inativo>>
+  * status_projeto : ENUM('Backlog', 'Em_Andamento', 'Concluido')
+}
+
+entity "Reuniao" as reuniao {
+  * id : UUID <<PK>>
+  --
+  * projeto_id : UUID <<FK>>
+  * data_agendada : DATETIME
+  * status : ENUM('Agendada', 'Realizada', 'Remarcada', 'No_Show')
+  observacoes : TEXT
+}
+
+analista ||--o{ projeto
+cliente ||--o{ projeto
+projeto ||--o{ reuniao
+
+note right of projeto
+  **Métricas Calculadas (Logic/View):**
+  - Dias de vida: current_date - data_contratacao
+  - Lead Time Ativação: data_ativacao - data_contratacao
+  - Safra: Month/Year de data_contratacao
+end note
+
+note bottom of reuniao
+  **Cálculo de No-Show:**
+  Contagem de registros onde 
+  status = 'No_Show'
+end note
+
+@enduml

@@ -1,0 +1,19 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Diagrama de Contexto (Nível 1) - CRM de Implantação
+
+Person(analista, "Analista de Implantação", "Usuário principal que gerencia a carteira de clientes e o progresso das entregas.")
+
+System(crm_sistema, "Onboardly (Sistema CRM)", "Permite o acompanhamento centralizado, registro de atividades e status de onboarding dos clientes.")
+
+
+System_Ext(erp_empresa, "ERP Corporativo", "Fonte de dados de novos contratos e informações cadastrais dos clientes.")
+
+Rel(analista, crm_sistema, "Gerencia clientes e registra progresso das etapas", "HTTPS")
+
+Rel(erp_empresa, crm_sistema, "Fornece dados de novos clientes para", "Webhooks/JSON")
+
+@enduml

@@ -1,0 +1,97 @@
+@startuml
+!theme plain
+skinparam classAttributeIconSize 0
+skinparam monochrome false
+skinparam shadowing false
+
+title Diagrama de Classes Detalhado - CRM Onboardly (Backend Go)
+
+package "Domain Models (Entidades)" {
+    enum StatusProjeto {
+        BACKLOG
+        EM_ANDAMENTO
+        CONCLUIDO
+    }
+
+    enum StatusReuniao {
+        AGENDADA
+        REALIZADA
+        REMARCADA
+        NO_SHOW
+    }
+
+    class Analista <<entity>> {
+        + ID: UUID
+        + Nome: string
+        + Email: string
+    }
+
+    class Cliente <<entity>> {
+        + ID: UUID
+        + NomeFantasia: string
+        + CNPJ: string
+    }
+
+    class Projeto <<entity>> {
+        + ID: UUID
+        + ClienteID: UUID
+        + AnalistaID: UUID
+        + DataContratacao: time.Time
+        + DataAtivacao: *time.Time
+        + StatusAtivacao: bool
+        + Status: StatusProjeto
+        --
+        + GetDiasVida(): int
+        + GetLeadTimeAtivacao(): int
+        + GetSafra(): string
+        + CountReunioesPorStatus(s: StatusReuniao): int
+        + FoiAtivadoComSucesso(): bool
+    }
+
+    class Reuniao <<entity>> {
+        + ID: UUID
+        + ProjetoID: UUID
+        + DataAgendada: time.Time
+        + Status: StatusReuniao
+        + Observacoes: string
+    }
+}
+
+package "Services & Analytics (Lógica de Negócio)" {
+    class DashboardService <<service>> {
+        --
+        + GetAnalyticsPorSafra(mes: int, ano: int): DashboardDTO
+        + ListarClientesNoShowCritico(): List<Cliente>
+        - calcularTaxaNoShow(projetos: List<Projeto>): float64
+        - calcularTaxaAtivacao(projetos: List<Projeto>): float64
+    }
+
+    class DashboardDTO <<dto>> {
+        + Safra: string {json}
+        + QtdContratacoes: int {json}
+        + QtdAtivacoes: int {json}
+        + QtdReunioesRealizadas: int {json}
+        + QtdReunioesNoShow: int {json}
+        + TaxaAtivacao: float64 {json}
+        + TaxaNoShow: float64 {json}
+        + MetaAtivacaoAtingida: bool {json}
+        + MetaNoShowAtingida: bool {json}
+    }
+}
+
+' Relacionamentos
+Projeto "1" *-- "0..*" Reuniao : contém/compõe
+Analista "1" -- "0..*" Projeto : gerencia
+Cliente "1" -- "1" Projeto : possui
+
+DashboardService ..> Projeto : processa
+DashboardService ..> Reuniao : processa
+DashboardService ..> DashboardDTO : gera
+
+note right of DashboardDTO
+  Este objeto é enviado ao Vue.js
+  contendo os KPIs de 86% de ativação
+  e <10% de No-Show.
+end note
+
+@enduml

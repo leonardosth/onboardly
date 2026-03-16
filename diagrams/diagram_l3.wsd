@@ -1,0 +1,42 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Diagrama de Componentes (Nível 3) - API de Backend (Golang)
+
+Container(web_app, "Aplicação Web", "Vue.js", "Interface onde o analista visualiza o dashboard e gerencia clientes.")
+ContainerDb(db, "Banco de Dados", "PostgreSQL", "Armazena dados de clientes, projetos e reuniões.")
+
+Container_Boundary(api_golang, "API de Backend (Go)") {
+    
+    Component(auth_comp, "Componente de Autenticação", "Go/JWT", "Gerencia o login e validação de tokens dos analistas.")
+    
+    Component(project_handler, "Handler de Projetos", "Go/Gin or Fiber", "Exposição de endpoints REST para CRUD de projetos e reuniões.")
+    
+    Component(dashboard_handler, "Handler de Dashboard", "Go/Gin or Fiber", "Endpoints específicos para fornecer os dados analíticos (safra, taxas).")
+    
+    Component(project_service, "Serviço de Projetos", "Go Logic", "Gerencia as regras de negócio de criação de projetos e fluxo de status.")
+    
+    Component(dashboard_service, "Serviço de Analytics", "Go Logic", "Executa os cálculos complexos: 86% de ativação, <10% no-show e agrupamento por safra.")
+    
+    Component(repository, "Repositório de Dados", "Go/GORM or SQLx", "Abstração de acesso ao banco de dados para todas as entidades.")
+}
+
+' Relacionamentos Externos para Internos
+Rel(web_app, auth_comp, "Solicita acesso", "JSON/HTTPS")
+Rel(web_app, project_handler, "Gerencia dados", "JSON/HTTPS")
+Rel(web_app, dashboard_handler, "Solicita métricas", "JSON/HTTPS")
+
+' Relacionamentos Internos
+Rel(project_handler, project_service, "Usa")
+Rel(dashboard_handler, dashboard_service, "Usa")
+Rel(auth_comp, repository, "Verifica credenciais")
+
+Rel(project_service, repository, "Persiste dados")
+Rel(dashboard_service, repository, "Consulta dados históricos")
+
+' Relacionamento com o Banco
+Rel(repository, db, "Lê/Escreve", "SQL/TCP")
+
+@enduml

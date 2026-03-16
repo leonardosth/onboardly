@@ -1,0 +1,20 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Diagrama de Contêineres (Nível 2) - Onboardly CRM
+
+Person(analista, "Analista de Implantação", "Usuário que gerencia a carteira de clientes.")
+
+System_Boundary(c1, "Onboardly CRM") {
+    Container(web_app, "Aplicação Web", "Vue.js", "Provê a interface do usuário para gerenciamento de clientes e fluxos de implantação.")
+    Container(api, "API de Backend", "Golang", "Processa as regras de negócio, autenticação e gerenciamento de dados via REST API.")
+    ContainerDb(db, "Banco de Dados", "PostgreSQL", "Armazena cadastros de clientes, registros de atividades e metadados de sistema.")
+}
+
+Rel(analista, web_app, "Utiliza", "HTTPS/Browser")
+Rel(web_app, api, "Faz chamadas para", "JSON/HTTPS")
+Rel(api, db, "Lê e escreve em", "SQL/TCP")
+
+@enduml
