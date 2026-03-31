@@ -1,20 +1,15 @@
-package main
+package database
 
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
 
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
-func main() {
-	if err := godotenv.Load("../../.env"); err != nil {
-		log.Println("No .env file found")
-	}
-
+// Connect initializes and verifies the connection to the PostgreSQL database.
+func Connect() (*sql.DB, error) {
 	connStr := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		os.Getenv("DB_HOST"),
@@ -27,22 +22,15 @@ func main() {
 	// Abrir a conexão
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("erro ao abrir banco de dados: %w", err)
 	}
-	defer db.Close()
 
 	// Verificar se a conexão está ativa
 	err = db.Ping()
 	if err != nil {
-		log.Fatal("Erro ao conectar ao banco de dados:", err)
+		db.Close()
+		return nil, fmt.Errorf("erro ao conectar ao banco de dados: %w", err)
 	}
 
-	/* Teste adicional: Executar uma query simples
-	var result int
-	err = db.QueryRow("SELECT 1").Scan(&result)
-	if err != nil {
-		log.Fatal("Erro ao executar query de teste:", err)
-	}
-
-	fmt.Printf("Conexão realizada com sucesso! Resultado do teste: %d\n", result)*/
+	return db, nil
 }
