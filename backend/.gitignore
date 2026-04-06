@@ -1,0 +1,26 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+/bin/
+
+# Test binary, test logs, and coverage reports
+*.test
+*.out
+coverage.txt
+
+# Environment variables (Crucial to protect DB credentials)
+.env
+.env.*
+!.env.example
+
+# Dependency directories
+/vendor/
+
+# IDE, Editor, and OS specific files
+.vscode/
+.idea/
+*.swp
+.DS_Store

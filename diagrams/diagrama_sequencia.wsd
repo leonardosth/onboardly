@@ -1,0 +1,51 @@
+@startuml
+!theme plain
+autonumber
+
+actor "Analista de Implantação" as User
+participant "Vue.js App" as Vue
+participant "Dashboard Handler (Go)" as Handler
+participant "Dashboard Service (Go)" as Service
+participant "Repository (Go)" as Repo
+database "PostgreSQL" as DB
+
+title Fluxo de Consulta de Métricas e Safras (Analytics)
+
+User -> Vue : Seleciona Safra (ex: Janeiro/2026)
+Vue -> Handler : GET /api/v1/dashboard?mes=1&ano=2026
+activate Handler
+
+Handler -> Service : GetAnalyticsPorSafra(1, 2026)
+activate Service
+
+Service -> Repo : BuscarProjetosComReunioes(1, 2026)
+activate Repo
+
+Repo -> DB : SELECT * FROM projetos JOIN reunioes...
+activate DB
+DB --> Repo : Lista de Projetos e Eventos
+deactivate DB
+
+Repo --> Service : slice []models.Projeto
+deactivate Repo
+
+note over Service
+  **Processamento da Lógica de Negócio:**
+  1. Filtra projetos com >= 1 reunião realizada.
+  2. Calcula % de Ativação (Meta: 86%).
+  3. Calcula Taxa de No-Show (Meta: <10%).
+  4. Verifica se as metas foram atingidas.
+end note
+
+Service -> Service : calcularMetas(projetos)
+
+Service --> Handler : DashboardDTO (JSON ready)
+deactivate Service
+
+Handler --> Vue : HTTP 200 OK (JSON Payload)
+deactivate Handler
+
+Vue -> Vue : Renderiza Gráficos (ApexCharts/Chart.js)
+Vue --> User : Exibe Dashboard com Status das Metas
+
+@enduml
