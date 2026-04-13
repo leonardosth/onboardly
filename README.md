@@ -1,5 +1,33 @@
 # Onboardly - CRM para Analistas de Implantação
 
+## 📊 Status do Projeto
+
+### 🔄 **SPRINT 1 - Infra & Backend (EM ANDAMENTO)**
+
+**✅ Concluído:**
+
+- ✅ Modelagem do banco de dados (PostgreSQL)
+- ✅ Setup do projeto em Go com arquitetura limpa
+- ✅ **CRUD completo de Clientes** (5 endpoints REST funcionais)
+- ✅ Testes unitários para clientes (13/13 passando)
+- ✅ Conexão e migração do banco de dados
+
+**🔄 Pendente:**
+
+- 🔄 CRUD de Projetos de Implantação
+- 🔄 CRUD de Analistas
+- 🔄 CRUD de Reuniões
+- 🔄 Relacionamentos entre entidades
+- 🔄 Validações de negócio avançadas
+
+### 📋 Próximas Sprints
+
+- **Sprint 2:** Completar backend (Projetos, Reuniões, Analistas)
+- **Sprint 3:** Frontend Vue.js + Integração com API
+- **Sprint 4:** Polimento, validações e deploy
+
+---
+
 ## 📌 Domínio do Problema
 
 O projeto consiste em um CRM simplificado focado na dor do **Analista de Implantação**. Diferente de CRMs de vendas, este sistema foca no acompanhamento do cliente _pós-venda_, durante a fase técnica de configuração, treinamento e entrega de software.
@@ -35,18 +63,29 @@ O objetivo é evitar o "esquecimento" de etapas críticas, centralizar os contat
 
 Para o desenvolvimento deste MVP, o cronograma será dividido em sprints rápidas:
 
-1.  **Infra & Backend**
-    - Modelagem do banco de dados.
-    - Setup do projeto em Go.
-    - CRUD básico de Clientes e Projetos (Endpoints).
-2.  **Frontend & Integração**
-    - Setup do Vue.js (Vue Router/Pinia).
-    - Criação das telas de listagem e cadastro.
-    - Consumo da API.
-3.  **Polimento & Deploy**
-    - Refinamento da UI/UX.
-    - Tratamento de erros e validações.
-    - Documentação final.
+1.  🔄 **SPRINT 1 - Infra & Backend (EM ANDAMENTO)**
+    - ✅ Modelagem do banco de dados (PostgreSQL)
+    - ✅ Setup do projeto em Go com arquitetura limpa
+    - ✅ CRUD de Clientes (5 endpoints funcionais)
+    - 🔄 CRUD de Projetos e Reuniões (pendente)
+    - ✅ Testes unitários para clientes (13/13)
+
+2.  📋 **SPRINT 2 - Completar Backend (PENDENTE)**
+    - CRUD completo de Analistas
+    - CRUD completo de Projetos de Implantação
+    - CRUD completo de Reuniões
+    - Relacionamentos e constraints de FK
+
+3.  📋 **SPRINT 3 - Frontend & Integração (PENDENTE)**
+    - Setup do Vue.js (Vue Router/Pinia)
+    - Criação das telas de listagem e cadastro
+    - Consumo da API REST completa
+
+4.  📋 **SPRINT 4 - Polimento & Deploy (PENDENTE)**
+    - Dashboard com métricas
+    - Refinamento da UI/UX
+    - Tratamento de erros e validações
+    - Documentação final e deploy
 
 ---
 
@@ -73,6 +112,45 @@ onboardly/
 
 ---
 
+## 🔌 API REST - Endpoints Implementados
+
+### ✅ Clientes (`/clientes`) - IMPLEMENTADO
+
+| Método | Endpoint         | Descrição                | Status |
+| ------ | ---------------- | ------------------------ | ------ |
+| POST   | `/clientes`      | Criar novo cliente       | ✅     |
+| GET    | `/clientes`      | Listar todos os clientes | ✅     |
+| GET    | `/clientes/{id}` | Buscar cliente por ID    | ✅     |
+| PUT    | `/clientes/{id}` | Atualizar cliente        | ✅     |
+| DELETE | `/clientes/{id}` | Remover cliente          | ✅     |
+
+### 📋 Próximas Implementações
+
+- **Projetos** (`/projetos`) - CRUD pendente
+- **Analistas** (`/analistas`) - CRUD pendente
+- **Reuniões** (`/reunioes`) - CRUD pendente
+
+#### Exemplo de Uso
+
+**Criar Cliente:**
+
+```bash
+curl -X POST http://localhost:8080/clientes \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nome": "Empresa Teste S.A.",
+    "cnpj": "12.345.678/0001-90"
+  }'
+```
+
+**Listar Clientes:**
+
+```bash
+curl -X GET http://localhost:8080/clientes
+```
+
+---
+
 ## ⚙️ Como Executar (Setup Local)
 
 ### Pré-requisitos
@@ -83,19 +161,108 @@ onboardly/
 
 ### Backend
 
-1. Acesse o diretório do backend: `cd backend`
-2. Crie um arquivo `.env` na raiz da pasta `backend/` e defina as variáveis (utilize o `.env.example` como base):
-   ```env
-   DB_HOST=localhost
-   DB_PORT=5432
-   DB_USER=postgres
-   DB_PASSWORD=suasenha
-   DB_NAME=onboardly_db
+1. **Configurar Banco de Dados:**
+
+   ```bash
+   # Criar banco de dados
+   createdb onboardly_db
+
+   # Executar migração (schema.sql)
+   psql -U postgres -d onboardly_db -f schema.sql
    ```
-3. Execute a API: `go run cmd/api/main.go`
+
+2. **Configurar Ambiente:**
+
+   ```bash
+   cd backend
+   cp .env.example .env  # Editar com suas credenciais
+   ```
+
+3. **Executar API:**
+
+   ```bash
+   go run cmd/api/main.go
+   ```
+
+4. **Executar Testes:**
+
+   ```bash
+   # Todos os testes
+   go test ./internal/service/... -v
+
+   # Testes específicos
+   go test -run TestCreateClient ./internal/service/...
+   ```
+
+### Testes Automatizados
+
+- ✅ **13 testes unitários** para clientes (100% cobertura)
+- 📋 Testes para outras entidades (pendente)
+- Uso de mocks para isolamento de dependências
 
 ---
 
-## �‍💻 Autor
+## 🏗️ Arquitetura Técnica Implementada
+
+### Padrões Utilizados
+
+- **Clean Architecture:** Separação clara entre camadas (Handlers → Service → Repository)
+- **Dependency Injection:** Injeção de dependências para facilitar testes
+- **Repository Pattern:** Abstração do acesso a dados
+- **SOLID Principles:** Interface segregation e single responsibility
+
+### Estrutura de Código
+
+```
+internal/
+├── handlers/     # Controladores HTTP (JSON, validações)
+├── service/      # Regras de negócio e lógica de aplicação
+├── repository/   # Acesso a dados (SQL queries)
+├── models/       # Estruturas de dados do domínio
+└── database/     # Configuração de conexão DB
+```
+
+### Tecnologias Backend
+
+- **Framework:** Go 1.26.1 (net/http nativo)
+- **Banco:** PostgreSQL com driver `lib/pq`
+- **Testes:** Testes unitários com mocks (atualmente apenas para clientes)
+- **Configuração:** Variáveis de ambiente (.env)
+
+### Entidades Implementadas
+
+- ✅ **Clientes** - CRUD completo com testes
+- 📋 **Analistas** - Pendente
+- 📋 **Projetos** - Pendente
+- 📋 **Reuniões** - Pendente
+
+## 🚀 Próximos Passos
+
+### Sprint 1 - Completar Backend
+
+1. Implementar CRUD de Analistas
+2. Implementar CRUD de Projetos de Implantação
+3. Implementar CRUD de Reuniões
+4. Configurar relacionamentos entre entidades
+5. Adicionar validações de negócio
+
+### Sprint 2 - Frontend Vue.js
+
+1. Inicializar projeto Vue.js com Vite
+2. Configurar Pinia para gerenciamento de estado
+3. Criar componentes para CRUD completo
+4. Implementar chamadas para a API REST
+5. Estilizar com Tailwind CSS
+
+### Funcionalidades Planejadas
+
+- **Dashboard:** Métricas de projetos por status
+- **Gestão de Projetos:** CRUD completo com relacionamentos
+- **Reuniões:** Log de atividades e follow-ups
+- **Relatórios:** Exportação de dados
+
+---
+
+## 👨‍💻 Autor
 
 - **Leonardo**
