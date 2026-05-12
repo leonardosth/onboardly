@@ -14,8 +14,8 @@ type ClientRepository interface {
 	GetByCNPJ(ctx context.Context, cnpj string) (*models.Cliente, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*models.Cliente, error)
 	GetEveryone(ctx context.Context) ([]*models.Cliente, error)
-	UpdateCliente(ctx context.Context, cliente *models.Cliente) error
-	DeleteCliente(ctx context.Context, id uuid.UUID) error
+	Update(ctx context.Context, cliente *models.Cliente) error
+	Delete(ctx context.Context, id uuid.UUID) error
 }
 
 type ClientService struct {
@@ -50,10 +50,10 @@ func (s *ClientService) GetByID(ctx context.Context, id uuid.UUID) (*models.Clie
 	return s.repo.GetByID(ctx, id)
 }
 
-func (s *ClientService) UpdateCliente(ctx context.Context, cliente *models.Cliente) error {
-	return s.repo.UpdateCliente(ctx, cliente)
+func (s *ClientService) Update(ctx context.Context, cliente *models.Cliente) error {
+	return s.repo.Update(ctx, cliente)
 }
 
-func (s *ClientService) DeleteCliente(ctx context.Context, id uuid.UUID) error {
-	return s.repo.DeleteCliente(ctx, id)
+func (s *ClientService) Delete(ctx context.Context, id uuid.UUID) error {
+	return s.repo.Delete(ctx, id)
 }

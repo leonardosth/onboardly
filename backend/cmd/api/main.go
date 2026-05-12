@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -18,61 +18,194 @@ import (
 )
 
 func main() {
-	// 1. Carregar variáveis de ambiente
+	// Inicializa Logger Estruturado (slog)
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
 	if err := godotenv.Load(); err != nil {
-		log.Println("Aviso: Arquivo .env não encontrado, utilizando variáveis de sistema")
+		slog.Warn("Arquivo .env não encontrado, utilizando variáveis de sistema")
 	}
 
-	// 2. Conectar ao Banco de Dados
 	db, err := database.Connect()
 	if err != nil {
-		log.Fatalf("Falha crítica ao conectar no banco: %v", err)
+		slog.Error("Falha crítica ao conectar no banco", "error", err)
+		os.Exit(1)
 	}
 	defer db.Close()
-	log.Println("Conectado ao PostgreSQL com sucesso.")
+	slog.Info("Conectado ao PostgreSQL com sucesso.")
 
-	// 3. Injeção de Dependências (Wiring)
+	// Clientes
 	clientRepo := repository.NewClientPostgres(db)
 	clientService := service.NewClientService(clientRepo)
 	clientHandler := handlers.NewClientHandler(clientService)
 
-	// 4. Rotas (Utilizando net/http padrão do Go 1.22+)
+	// Analistas
+	analistaRepo := repository.NewAnalistaPostgres(db)
+	analistaService := service.NewAnalistaService(analistaRepo)
+	analistaHandler := handlers.NewAnalistaHandler(analistaService)
+
+	// Projetos
+	projetoRepo := repository.NewProjetoPostgres(db)
+	projetoService := service.NewProjetoService(projetoRepo)
+	projetoHandler := handlers.NewProjetoHandler(projetoService)
+
+	// Reuniões
+	reuniaoRepo := repository.NewReuniaoPostgres(db)
+	reuniaoService := service.NewReuniaoService(reuniaoRepo)
+	reuniaoHandler := handlers.NewReuniaoHandler(reuniaoService)
+
 	mux := http.NewServeMux()
 
 	// Endpoints de Clientes
-	mux.HandleFunc("POST /clientes", clientHandler.Create)
-	mux.HandleFunc("GET /clientes", clientHandler.GetAll)
-	mux.HandleFunc("GET /clientes/{id}", clientHandler.GetByID)
-	mux.HandleFunc("PUT /clientes/{id}", clientHandler.Update)
-	mux.HandleFunc("DELETE /clientes/{id}", clientHandler.Delete)
+	mux.HandleFunc("/clientes", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			clientHandler.Create(w, r)
+		case http.MethodGet:
+			clientHandler.GetAll(w, r)
+		default:
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		}
+	})
+	mux.HandleFunc("/clientes/", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			clientHandler.GetByID(w, r)
+		case http.MethodPut:
+			clientHandler.Update(w, r)
+		case http.MethodDelete:
+			clientHandler.Delete(w, r)
+		default:
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		}
+	})
 
-	// 5. Configurar o Servidor com Graceful Shutdown
+	// Endpoints de Analistas
+	mux.HandleFunc("/analistas", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			analistaHandler.Create(w, r)
+		case http.MethodGet:
+			analistaHandler.GetAll(w, r)
+		default:
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		}
+	})
+	mux.HandleFunc("/analistas/", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			analistaHandler.GetByID(w, r)
+		case http.MethodPut:
+			analistaHandler.Update(w, r)
+		case http.MethodDelete:
+			analistaHandler.Delete(w, r)
+		default:
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	// Endpoints de Projetos
+	mux.HandleFunc("/projetos", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			projetoHandler.Create(w, r)
+		case http.MethodGet:
+			projetoHandler.GetAll(w, r)
+		default:
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		}
+	})
+	mux.HandleFunc("/projetos/", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			projetoHandler.GetByID(w, r)
+		case http.MethodPut:
+			projetoHandler.Update(w, r)
+		case http.MethodDelete:
+			projetoHandler.Delete(w, r)
+		default:
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	// Endpoint Dashboard
+	mux.HandleFunc("/dashboard/stats", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			return
+		}
+		projetoHandler.GetStats(w, r)
+	})
+
+	// Endpoints de Reuniões
+	mux.HandleFunc("/reunioes", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			reuniaoHandler.Create(w, r)
+		case http.MethodGet:
+			reuniaoHandler.GetAll(w, r)
+		default:
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		}
+	})
+	mux.HandleFunc("/reunioes/", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			reuniaoHandler.GetByID(w, r)
+		case http.MethodPut:
+			reuniaoHandler.Update(w, r)
+		case http.MethodDelete:
+			reuniaoHandler.Delete(w, r)
+		default:
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	// Aplicar Middleware de CORS
+	handler := corsMiddleware(mux)
+
 	srv := &http.Server{
 		Addr:         ":8080",
-		Handler:      mux,
+		Handler:      handler,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	}
 
-	// Canal para interceptar sinal de parada do sistema operacional (Ctrl+C, Docker stop)
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
-		log.Println("Servidor rodando na porta 8080...")
+		slog.Info("Servidor rodando na porta 8080...")
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Erro no servidor: %v", err)
+			slog.Error("Erro no servidor", "error", err)
+			os.Exit(1)
 		}
 	}()
 
-	<-stop // Bloqueia até recebermos um sinal
-	log.Println("Desligando o servidor...")
+	<-stop
+	slog.Info("Desligando o servidor...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatalf("Erro no Graceful Shutdown: %v", err)
+		slog.Error("Erro no Graceful Shutdown", "error", err)
+		os.Exit(1)
 	}
-	log.Println("Servidor finalizado com segurança.")
+	slog.Info("Servidor finalizado com segurança.")
+}
+
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }

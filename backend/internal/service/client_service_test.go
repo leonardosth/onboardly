@@ -9,7 +9,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// Mock do Repositório
 type mockClientRepository struct {
 	mockGetByCNPJ   func(cnpj string) (*models.Cliente, error)
 	mockGetByID     func(id uuid.UUID) (*models.Cliente, error)
@@ -31,10 +30,10 @@ func (m *mockClientRepository) Create(ctx context.Context, cliente *models.Clien
 func (m *mockClientRepository) GetEveryone(ctx context.Context) ([]*models.Cliente, error) {
 	return m.mockGetEveryone()
 }
-func (m *mockClientRepository) UpdateCliente(ctx context.Context, cliente *models.Cliente) error {
+func (m *mockClientRepository) Update(ctx context.Context, cliente *models.Cliente) error {
 	return m.mockUpdate(cliente)
 }
-func (m *mockClientRepository) DeleteCliente(ctx context.Context, id uuid.UUID) error {
+func (m *mockClientRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.mockDelete(id)
 }
 
@@ -42,7 +41,7 @@ func TestCreateClient(t *testing.T) {
 	t.Run("Deve retornar erro se CNPJ ja existir", func(t *testing.T) {
 		mockRepo := &mockClientRepository{
 			mockGetByCNPJ: func(cnpj string) (*models.Cliente, error) {
-				return &models.Cliente{CNPJ: "123"}, nil // Simulando cliente já existente
+				return &models.Cliente{CNPJ: "123"}, nil
 			},
 		}
 		service := NewClientService(mockRepo)
@@ -56,7 +55,7 @@ func TestCreateClient(t *testing.T) {
 	t.Run("Deve criar cliente se CNPJ for novo", func(t *testing.T) {
 		mockRepo := &mockClientRepository{
 			mockGetByCNPJ: func(cnpj string) (*models.Cliente, error) {
-				return nil, nil // Simulando cliente não encontrado
+				return nil, nil
 			},
 			mockCreate: func(cliente *models.Cliente) error {
 				return nil
@@ -74,8 +73,8 @@ func TestCreateClient(t *testing.T) {
 func TestGetEveryone(t *testing.T) {
 	t.Run("Deve retornar lista de clientes", func(t *testing.T) {
 		expectedClients := []*models.Cliente{
-			{CNPJ: "123", NomeFantasia: "Cliente 1"},
-			{CNPJ: "456", NomeFantasia: "Cliente 2"},
+			{CNPJ: "123", Nome: "Cliente 1"},
+			{CNPJ: "456", Nome: "Cliente 2"},
 		}
 		mockRepo := &mockClientRepository{
 			mockGetEveryone: func() ([]*models.Cliente, error) {
@@ -96,7 +95,7 @@ func TestGetEveryone(t *testing.T) {
 
 func TestGetByCNPJ(t *testing.T) {
 	t.Run("Deve retornar cliente pelo CNPJ", func(t *testing.T) {
-		expectedClient := &models.Cliente{CNPJ: "123", NomeFantasia: "Cliente 1"}
+		expectedClient := &models.Cliente{CNPJ: "123", Nome: "Cliente 1"}
 		mockRepo := &mockClientRepository{
 			mockGetByCNPJ: func(cnpj string) (*models.Cliente, error) {
 				return expectedClient, nil
@@ -117,7 +116,7 @@ func TestGetByCNPJ(t *testing.T) {
 func TestGetByID(t *testing.T) {
 	t.Run("Deve retornar cliente pelo ID", func(t *testing.T) {
 		clientID := uuid.New()
-		expectedClient := &models.Cliente{ID: clientID, CNPJ: "123", NomeFantasia: "Cliente 1"}
+		expectedClient := &models.Cliente{ID: clientID, CNPJ: "123", Nome: "Cliente 1"}
 		mockRepo := &mockClientRepository{
 			mockGetByID: func(id uuid.UUID) (*models.Cliente, error) {
 				return expectedClient, nil
@@ -135,7 +134,7 @@ func TestGetByID(t *testing.T) {
 	})
 }
 
-func TestUpdateCliente(t *testing.T) {
+func TestUpdate(t *testing.T) {
 	t.Run("Deve atualizar cliente com sucesso", func(t *testing.T) {
 		mockRepo := &mockClientRepository{
 			mockUpdate: func(cliente *models.Cliente) error {
@@ -144,14 +143,14 @@ func TestUpdateCliente(t *testing.T) {
 		}
 		service := NewClientService(mockRepo)
 
-		err := service.UpdateCliente(context.Background(), &models.Cliente{CNPJ: "123", NomeFantasia: "Novo Nome"})
+		err := service.Update(context.Background(), &models.Cliente{CNPJ: "123", Nome: "Novo Nome"})
 		if err != nil {
 			t.Errorf("Não esperava erro, recebeu: %v", err)
 		}
 	})
 }
 
-func TestDeleteCliente(t *testing.T) {
+func TestDelete(t *testing.T) {
 	t.Run("Deve deletar cliente com sucesso", func(t *testing.T) {
 		clientID := uuid.New()
 		mockRepo := &mockClientRepository{
@@ -164,7 +163,7 @@ func TestDeleteCliente(t *testing.T) {
 		}
 		service := NewClientService(mockRepo)
 
-		err := service.DeleteCliente(context.Background(), clientID)
+		err := service.Delete(context.Background(), clientID)
 		if err != nil {
 			t.Errorf("Não esperava erro, recebeu: %v", err)
 		}

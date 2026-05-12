@@ -11,6 +11,15 @@ import (
 	"github.com/google/uuid"
 )
 
+type ClientRepository interface {
+	Create(ctx context.Context, c *models.Cliente) error
+	GetByCNPJ(ctx context.Context, cnpj string) (*models.Cliente, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*models.Cliente, error)
+	GetEveryone(ctx context.Context) ([]*models.Cliente, error)
+	Update(ctx context.Context, c *models.Cliente) error
+	Delete(ctx context.Context, id uuid.UUID) error
+}
+
 type ClientPostgres struct {
 	db *sql.DB
 }
@@ -20,18 +29,18 @@ func NewClientPostgres(db *sql.DB) *ClientPostgres {
 }
 
 func (r *ClientPostgres) Create(ctx context.Context, c *models.Cliente) error {
-	query := `INSERT INTO clientes (id, nome_fantasia, cnpj, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)`
+	query := `INSERT INTO clientes (id, nome, cnpj, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)`
 	now := time.Now()
-	_, err := r.db.ExecContext(ctx, query, c.ID, c.NomeFantasia, c.CNPJ, now, now)
+	_, err := r.db.ExecContext(ctx, query, c.ID, c.Nome, c.CNPJ, now, now)
 	return err
 }
 
 func (r *ClientPostgres) GetByCNPJ(ctx context.Context, cnpj string) (*models.Cliente, error) {
-	query := `SELECT id, nome_fantasia, cnpj, created_at, updated_at FROM clientes WHERE cnpj = $1`
+	query := `SELECT id, nome, cnpj, created_at, updated_at, deleted_at FROM clientes WHERE cnpj = $1 AND deleted_at IS NULL`
 	row := r.db.QueryRowContext(ctx, query, cnpj)
 
 	var c models.Cliente
-	err := row.Scan(&c.ID, &c.NomeFantasia, &c.CNPJ, &c.CreatedAt, &c.UpdatedAt)
+	err := row.Scan(&c.ID, &c.Nome, &c.CNPJ, &c.CreatedAt, &c.UpdatedAt, &c.DeletedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -42,11 +51,11 @@ func (r *ClientPostgres) GetByCNPJ(ctx context.Context, cnpj string) (*models.Cl
 }
 
 func (r *ClientPostgres) GetByID(ctx context.Context, id uuid.UUID) (*models.Cliente, error) {
-	query := `SELECT id, nome_fantasia, cnpj, created_at, updated_at FROM clientes WHERE id = $1`
+	query := `SELECT id, nome, cnpj, created_at, updated_at, deleted_at FROM clientes WHERE id = $1 AND deleted_at IS NULL`
 	row := r.db.QueryRowContext(ctx, query, id)
 
 	var c models.Cliente
-	err := row.Scan(&c.ID, &c.NomeFantasia, &c.CNPJ, &c.CreatedAt, &c.UpdatedAt)
+	err := row.Scan(&c.ID, &c.Nome, &c.CNPJ, &c.CreatedAt, &c.UpdatedAt, &c.DeletedAt)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -57,7 +66,7 @@ func (r *ClientPostgres) GetByID(ctx context.Context, id uuid.UUID) (*models.Cli
 }
 
 func (r *ClientPostgres) GetEveryone(ctx context.Context) ([]*models.Cliente, error) {
-	query := `SELECT id, nome_fantasia, cnpj, created_at, updated_at FROM clientes ORDER BY created_at DESC`
+	query := `SELECT id, nome, cnpj, created_at, updated_at, deleted_at FROM clientes WHERE deleted_at IS NULL ORDER BY created_at DESC`
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
@@ -67,7 +76,7 @@ func (r *ClientPostgres) GetEveryone(ctx context.Context) ([]*models.Cliente, er
 	var clientes []*models.Cliente
 	for rows.Next() {
 		var c models.Cliente
-		if err := rows.Scan(&c.ID, &c.NomeFantasia, &c.CNPJ, &c.CreatedAt, &c.UpdatedAt); err != nil {
+		if err := rows.Scan(&c.ID, &c.Nome, &c.CNPJ, &c.CreatedAt, &c.UpdatedAt, &c.DeletedAt); err != nil {
 			return nil, err
 		}
 		clientes = append(clientes, &c)
@@ -75,9 +84,9 @@ func (r *ClientPostgres) GetEveryone(ctx context.Context) ([]*models.Cliente, er
 	return clientes, nil
 }
 
-func (r *ClientPostgres) UpdateCliente(ctx context.Context, c *models.Cliente) error {
-	query := `UPDATE clientes SET nome_fantasia = $1, updated_at = $2 WHERE id = $3`
-	res, err := r.db.ExecContext(ctx, query, c.NomeFantasia, time.Now(), c.ID)
+func (r *ClientPostgres) Update(ctx context.Context, c *models.Cliente) error {
+	query := `UPDATE clientes SET nome = $1, updated_at = $2 WHERE id = $3 AND deleted_at IS NULL`
+	res, err := r.db.ExecContext(ctx, query, c.Nome, time.Now(), c.ID)
 	if err != nil {
 		return err
 	}
@@ -91,9 +100,9 @@ func (r *ClientPostgres) UpdateCliente(ctx context.Context, c *models.Cliente) e
 	return nil
 }
 
-func (r *ClientPostgres) DeleteCliente(ctx context.Context, id uuid.UUID) error {
-	query := `DELETE FROM clientes WHERE id = $1`
-	res, err := r.db.ExecContext(ctx, query, id)
+func (r *ClientPostgres) Delete(ctx context.Context, id uuid.UUID) error {
+	query := `UPDATE clientes SET deleted_at = $1 WHERE id = $2 AND deleted_at IS NULL`
+	res, err := r.db.ExecContext(ctx, query, time.Now(), id)
 	if err != nil {
 		return err
 	}
