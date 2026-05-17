@@ -160,28 +160,71 @@ func (r *ProjetoPostgres) Delete(ctx context.Context, id uuid.UUID) error {
 }
 
 func (r *ProjetoPostgres) GetDashboardStats(ctx context.Context) (*models.DashboardStats, error) {
-	query := `SELECT status_projeto, COUNT(*) 
-	          FROM projetos_implantacao 
-	          WHERE deleted_at IS NULL 
-	          GROUP BY status_projeto`
-	rows, err := r.db.QueryContext(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
 	stats := &models.DashboardStats{
-		PorStatus: make(map[string]int),
+		PorStatus:        make(map[string]int),
+		HistoricoMensal:  []models.MonthlyStat{},
+		AtividadesRecent: []models.RecentActivity{},
 	}
 
-	for rows.Next() {
-		var status string
-		var count int
-		if err := rows.Scan(&status, &count); err != nil {
-			return nil, err
+	// 1. Totais Básicos
+	err := r.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM projetos_implantacao WHERE deleted_at IS NULL").Scan(&stats.TotalProjetos)
+	if err != nil { return nil, err }
+	
+	err = r.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM clientes WHERE deleted_at IS NULL").Scan(&stats.TotalClientes)
+	if err != nil { return nil, err }
+
+	err = r.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM reunioes WHERE DATE(data_agendada) = CURRENT_DATE AND deleted_at IS NULL").Scan(&stats.ReunioesHoje)
+	if err != nil { return nil, err }
+
+	// 2. Projetos por Status
+	rows, err := r.db.QueryContext(ctx, "SELECT status_projeto, COUNT(*) FROM projetos_implantacao WHERE deleted_at IS NULL GROUP BY status_projeto")
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var status string
+			var count int
+			if err := rows.Scan(&status, &count); err == nil {
+				stats.PorStatus[status] = count
+			}
 		}
-		stats.PorStatus[status] = count
-		stats.TotalProjetos += count
+	}
+
+	// 3. Histórico Mensal (Últimos 6 meses)
+	histRows, err := r.db.QueryContext(ctx, `
+		SELECT TO_CHAR(created_at, 'Mon') as mes, COUNT(*) 
+		FROM projetos_implantacao 
+		WHERE created_at > CURRENT_DATE - INTERVAL '6 months' 
+		GROUP BY TO_CHAR(created_at, 'Mon'), DATE_TRUNC('month', created_at)
+		ORDER BY DATE_TRUNC('month', created_at) ASC
+	`)
+	if err == nil {
+		defer histRows.Close()
+		for histRows.Next() {
+			var m models.MonthlyStat
+			if err := histRows.Scan(&m.Mes, &m.Total); err == nil {
+				stats.HistoricoMensal = append(stats.HistoricoMensal, m)
+			}
+		}
+	}
+
+	// 4. Atividades Recentes (Mix de Clientes, Projetos e Reuniões)
+	activityQuery := `
+		(SELECT 'Cliente' as tipo, nome as descricao, 'ATIVO' as status, created_at as data FROM clientes WHERE deleted_at IS NULL)
+		UNION ALL
+		(SELECT 'Projeto' as tipo, 'Projeto iniciado' as descricao, status_projeto as status, created_at as data FROM projetos_implantacao WHERE deleted_at IS NULL)
+		UNION ALL
+		(SELECT 'Reuniao' as tipo, 'Reunião agendada' as descricao, status as status, created_at as data FROM reunioes WHERE deleted_at IS NULL)
+		ORDER BY data DESC LIMIT 5
+	`
+	actRows, err := r.db.QueryContext(ctx, activityQuery)
+	if err == nil {
+		defer actRows.Close()
+		for actRows.Next() {
+			var a models.RecentActivity
+			if err := actRows.Scan(&a.Tipo, &a.Descricao, &a.Status, &a.Data); err == nil {
+				stats.AtividadesRecent = append(stats.AtividadesRecent, a)
+			}
+		}
 	}
 
 	return stats, nil

@@ -36,6 +36,22 @@ type ProjetoStatusHistorico struct {
 }
 
 type DashboardStats struct {
-	TotalProjetos int            `json:"total_projetos"`
-	PorStatus     map[string]int `json:"por_status"`
+	TotalProjetos    int               `json:"total_projetos"`
+	TotalClientes    int               `json:"total_clientes"`
+	ReunioesHoje     int               `json:"reunioes_hoje"`
+	PorStatus        map[string]int    `json:"por_status"`
+	HistoricoMensal  []MonthlyStat     `json:"historico_mensal"`
+	AtividadesRecent []RecentActivity  `json:"atividades_recentes"`
+}
+
+type MonthlyStat struct {
+	Mes   string `json:"mes"`
+	Total int    `json:"total"`
+}
+
+type RecentActivity struct {
+	Tipo      string    `json:"tipo"` // 'Projeto', 'Cliente', 'Reuniao'
+	Descricao string    `json:"descricao"`
+	Status    string    `json:"status"`
+	Data      time.Time `json:"data"`
 }

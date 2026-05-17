@@ -1,30 +1,26 @@
 import { Usuario } from '../types';
 import { apiFetch } from './api';
 
-export const analistaService = {
-  async getAll(): Promise<Usuario[]> {
+export const usuarioService = {
+  async getAnalistas(): Promise<Usuario[]> {
     return apiFetch('/analistas');
   },
 
-  async getByID(id: string): Promise<Usuario> {
-    return apiFetch(`/analistas/${id}`);
-  },
-
-  async create(analista: Partial<Usuario>): Promise<Usuario> {
+  async createAnalista(analista: Partial<Usuario>): Promise<Usuario> {
     return apiFetch('/analistas', {
       method: 'POST',
       body: JSON.stringify(analista)
     });
   },
 
-  async update(id: string, analista: Partial<Usuario>): Promise<void> {
+  async updateAnalista(id: string, analista: Partial<Usuario>): Promise<void> {
     return apiFetch(`/analistas/${id}`, {
       method: 'PUT',
       body: JSON.stringify(analista)
     });
   },
 
-  async delete(id: string): Promise<void> {
+  async deleteAnalista(id: string): Promise<void> {
     return apiFetch(`/analistas/${id}`, {
       method: 'DELETE'
     });

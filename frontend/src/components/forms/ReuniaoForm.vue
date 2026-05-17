@@ -55,13 +55,13 @@ defineExpose({ submit })
 </script>
 
 <template>
-  <form @submit.prevent="submit" class="space-y-6">
-    <div class="space-y-2">
-      <label class="text-sm font-bold text-slate-700 uppercase tracking-wider">Projeto / Cliente</label>
+  <form @submit.prevent="submit" class="space-y-8">
+    <div class="space-y-2.5">
+      <label class="text-[14px] font-semibold text-[var(--color-text-primary)] px-0.5">Projeto / Cliente</label>
       <select
         v-model="form.projeto_id"
         required
-        class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue transition-all bg-white"
+        class="w-full px-4 py-3.5 rounded-[var(--radius-apple-sm)] bg-zinc-100/50 border border-zinc-200/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10 focus:border-[var(--color-primary)] transition-all text-[var(--color-text-primary)] font-medium appearance-none"
       >
         <option value="" disabled>Selecione um projeto</option>
         <option v-for="project in projects" :key="project.id" :value="project.id">
@@ -70,22 +70,22 @@ defineExpose({ submit })
       </select>
     </div>
 
-    <div class="space-y-2">
-      <label class="text-sm font-bold text-slate-700 uppercase tracking-wider">Data e Hora</label>
+    <div class="space-y-2.5">
+      <label class="text-[14px] font-semibold text-[var(--color-text-primary)] px-0.5">Data e Hora</label>
       <input
         v-model="form.data_agendada"
         type="datetime-local"
         required
-        class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue transition-all font-mono"
+        class="w-full px-4 py-3.5 rounded-[var(--radius-apple-sm)] bg-zinc-100/50 border border-zinc-200/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10 focus:border-[var(--color-primary)] transition-all font-mono text-[var(--color-text-primary)]"
       />
     </div>
 
-    <div class="space-y-2">
-      <label class="text-sm font-bold text-slate-700 uppercase tracking-wider">Status</label>
+    <div class="space-y-2.5">
+      <label class="text-[14px] font-semibold text-[var(--color-text-primary)] px-0.5">Status</label>
       <select
         v-model="form.status"
         required
-        class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue transition-all bg-white"
+        class="w-full px-4 py-3.5 rounded-[var(--radius-apple-sm)] bg-zinc-100/50 border border-zinc-200/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10 focus:border-[var(--color-primary)] transition-all text-[var(--color-text-primary)] font-medium appearance-none"
       >
         <option value="Agendada">Agendada</option>
         <option value="Realizada">Realizada</option>
@@ -94,13 +94,13 @@ defineExpose({ submit })
       </select>
     </div>
 
-    <div class="space-y-2">
-      <label class="text-sm font-bold text-slate-700 uppercase tracking-wider">Observações</label>
+    <div class="space-y-2.5">
+      <label class="text-[14px] font-semibold text-[var(--color-text-primary)] px-0.5">Observações</label>
       <textarea
         v-model="form.observacoes"
         rows="4"
         placeholder="Notas sobre a reunião..."
-        class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue transition-all"
+        class="w-full px-4 py-3.5 rounded-[var(--radius-apple-sm)] bg-zinc-100/50 border border-zinc-200/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10 focus:border-[var(--color-primary)] transition-all text-[var(--color-text-primary)] font-medium placeholder:text-[var(--color-text-tertiary)] resize-none"
       ></textarea>
     </div>
   </form>

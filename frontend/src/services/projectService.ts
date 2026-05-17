@@ -1,37 +1,43 @@
-import axios from 'axios';
 import type { Projeto } from '../types';
-
-const api = axios.create({
-  baseURL: '/api',
-});
+import { apiFetch } from './api';
 
 export const projectService = {
   async getAll(): Promise<Projeto[]> {
-    const { data } = await api.get<Projeto[]>('/projetos');
-    return data || [];
+    return apiFetch('/projetos') || [];
   },
 
   async getById(id: string): Promise<Projeto> {
-    const { data } = await api.get<Projeto>(`/projetos/${id}`);
-    return data;
+    return apiFetch(`/projetos/${id}`);
   },
 
   async create(projeto: Partial<Projeto>): Promise<Projeto> {
-    const { data } = await api.post<Projeto>('/projetos', projeto);
-    return data;
+    return apiFetch('/projetos', {
+      method: 'POST',
+      body: JSON.stringify(projeto)
+    });
   },
 
   async update(id: string, projeto: Partial<Projeto>): Promise<Projeto> {
-    const { data } = await api.put<Projeto>(`/projetos/${id}`, projeto);
-    return data;
+    return apiFetch(`/projetos/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(projeto)
+    });
   },
 
   async delete(id: string): Promise<void> {
-    await api.delete(`/projetos/${id}`);
+    return apiFetch(`/projetos/${id}`, {
+      method: 'DELETE'
+    });
   },
 
-  async getStats(): Promise<{ total_projetos: number; por_status: Record<string, number> }> {
-    const { data } = await api.get('/dashboard/stats');
-    return data;
+  async getStats(): Promise<{ 
+    total_projetos: number; 
+    total_clientes: number;
+    reunioes_hoje: number;
+    por_status: Record<string, number>;
+    historico_mensal: Array<{ mes: string; total: number }>;
+    atividades_recentes: Array<{ tipo: string; descricao: string; status: string; data: string }>;
+  }> {
+    return apiFetch('/dashboard/stats');
   }
 };

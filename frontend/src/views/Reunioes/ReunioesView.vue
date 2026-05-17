@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useToastStore } from '../../stores/toastStore'
 import { 
   Bold, Italic, Underline, Strikethrough, Code, Link as LinkIcon, 
   List, ListOrdered, Quote, Image as ImageIcon, Table as TableIcon,
-  CheckCircle2, Clock, XCircle, Loader2, Plus, Save
+  CheckCircle2, Clock, XCircle, Loader2, Plus, Save, CalendarDays, Package
 } from 'lucide-vue-next'
 import { reuniaoService } from '../../services/reuniaoService'
 import { projectService } from '../../services/projectService'
@@ -40,16 +40,8 @@ const fetchData = async () => {
     ])
     
     meetings.value = meetingsData
-    
-    projects.value = projectsData.reduce((acc, p) => {
-      acc[p.id] = p
-      return acc
-    }, {} as Record<string, Projeto>)
-    
-    clients.value = clientsData.reduce((acc, c) => {
-      acc[c.id] = c
-      return acc
-    }, {} as Record<string, Cliente>)
+    projects.value = projectsData.reduce((acc, p) => { acc[p.id] = p; return acc }, {} as Record<string, Projeto>)
+    clients.value = clientsData.reduce((acc, c) => { acc[c.id] = c; return acc }, {} as Record<string, Cliente>)
 
     if (meetingsData.length > 0 && !selectedMeetingId.value) {
       selectedMeetingId.value = meetingsData[0].id
@@ -94,25 +86,18 @@ const handleSave = async (formData: any) => {
 
 const getClientNameByProjectId = (projectId: string) => {
   const project = projects.value[projectId]
-  if (!project) return 'Unknown Project'
-  return clients.value[project.cliente_id]?.nome || 'Unknown Client'
+  if (!project) return 'Projeto não encontrado'
+  return clients.value[project.cliente_id]?.nome || 'Cliente não encontrado'
 }
 
 const formatTime = (dateString: string) => {
-  const date = new Date(dateString)
-  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
-}
-
-const formatDuration = (dateString: string) => {
-  const date = new Date(dateString)
-  const endDate = new Date(date.getTime() + 60 * 60 * 1000) // Default 1h duration
-  return endDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+  return new Date(dateString).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
 }
 
 const getStatusLabel = (status: string) => {
   switch (status) {
-    case 'Agendada': return 'Scheduled'
-    case 'Realizada': return 'Completed'
+    case 'Agendada': return 'Agendada'
+    case 'Realizada': return 'Realizada'
     case 'No_Show': return 'No Show'
     default: return status
   }
@@ -122,156 +107,141 @@ onMounted(fetchData)
 </script>
 
 <template>
-  <div class="space-y-8">
-    <div class="flex justify-between items-center">
-      <h1 class="text-[32px] font-bold text-slate-900">Meetings & Technical Log</h1>
+  <div class="space-y-10">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+      <div class="space-y-1">
+        <h1 class="text-3xl font-bold tracking-tight text-[var(--color-text-primary)]">Reuniões Técnicas</h1>
+        <p class="text-[var(--color-text-secondary)] font-medium">Acompanhe seus agendamentos e registre notas de implementação.</p>
+      </div>
       <button 
         @click="openNewMeeting"
-        class="bg-brand-blue text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-600 transition-all shadow-lg shadow-blue-200 active:scale-95"
+        class="bg-[var(--color-primary)] text-white px-6 py-3 rounded-full font-bold flex items-center gap-2 hover:bg-[var(--color-primary-hover)] transition-all shadow-lg shadow-blue-500/20 active:scale-95 text-sm"
       >
         <Plus class="w-5 h-5" />
-        New Meeting
+        Agendar Reunião
       </button>
     </div>
 
-    <div v-if="isLoading" class="flex justify-center items-center h-64">
+    <div v-if="isLoading" class="flex justify-center items-center h-96">
       <div class="flex flex-col items-center gap-4">
-        <Loader2 class="w-10 h-10 text-brand-blue animate-spin" />
-        <p class="text-slate-500 font-medium">Loading meetings...</p>
+        <Loader2 class="w-12 h-12 text-[var(--color-primary)] animate-spin" />
+        <p class="text-[var(--color-text-tertiary)] font-medium text-sm">Carregando cronograma...</p>
       </div>
     </div>
 
-    <div v-else-if="meetings.length === 0" class="bg-white p-12 rounded-[24px] border border-slate-100 text-center">
-      <Clock class="w-12 h-12 text-slate-300 mx-auto mb-4" />
-      <h3 class="text-lg font-bold text-slate-900">No meetings found</h3>
-      <p class="text-slate-500">Scheduled meetings will appear here.</p>
+    <div v-else-if="meetings.length === 0" class="bg-[var(--color-surface)] p-20 rounded-[var(--radius-apple)] border border-[var(--color-border-soft)] shadow-premium text-center">
+      <div class="w-20 h-20 bg-zinc-50 rounded-full flex items-center justify-center mb-6 mx-auto">
+        <CalendarDays class="w-10 h-10 text-zinc-300" />
+      </div>
+      <h3 class="text-xl font-bold text-[var(--color-text-primary)]">Sem reuniões</h3>
+      <p class="text-[var(--color-text-tertiary)] font-medium mt-2">Agende uma reunião para começar a documentar.</p>
     </div>
 
-    <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-      <!-- Upcoming Meetings Column -->
-      <div class="bg-white p-8 rounded-[24px] shadow-soft border border-slate-50">
-        <h2 class="text-xl font-bold text-slate-900 mb-8">Meetings</h2>
-        
-        <div class="space-y-6 relative">
-          <!-- Continuous Line -->
-          <div class="absolute left-[105px] top-4 bottom-4 w-0.5 bg-slate-100"></div>
+    <div v-else class="grid grid-cols-1 lg:grid-cols-5 gap-10 items-start">
+      <!-- Meetings List -->
+      <div class="lg:col-span-2 space-y-6">
+        <div 
+          v-for="meeting in meetings" 
+          :key="meeting.id"
+          @click="selectedMeetingId = meeting.id"
+          :class="[
+            selectedMeetingId === meeting.id ? 'ring-2 ring-[var(--color-primary)] shadow-lg' : 'hover:bg-zinc-50 border-[var(--color-border-soft)]',
+            'bg-[var(--color-surface)] p-6 rounded-2xl border transition-all cursor-pointer group flex gap-5'
+          ]"
+        >
+          <div class="flex flex-col items-center justify-center text-center w-14">
+            <span class="text-[12px] font-bold text-[var(--color-text-tertiary)] uppercase tracking-wider">{{ new Date(meeting.data_agendada).toLocaleDateString('pt-BR', { weekday: 'short' }) }}</span>
+            <span class="text-2xl font-black text-[var(--color-text-primary)] leading-tight">{{ new Date(meeting.data_agendada).getDate() }}</span>
+            <span class="text-[14px] font-bold text-[var(--color-primary)]">{{ formatTime(meeting.data_agendada) }}</span>
+          </div>
 
-          <div 
-            v-for="meeting in meetings" 
-            :key="meeting.id"
-            @click="selectedMeetingId = meeting.id"
-            class="flex gap-8 group cursor-pointer"
-          >
-            <!-- Time -->
-            <div class="w-20 pt-1 text-right">
-              <p class="text-sm font-bold text-slate-900">{{ formatTime(meeting.data_agendada) }}</p>
-              <p class="text-xs font-medium text-slate-400">{{ formatDuration(meeting.data_agendada) }}</p>
+          <div class="flex-1 space-y-3">
+            <div>
+              <p class="text-[15px] font-bold text-[var(--color-text-primary)] leading-tight">{{ getClientNameByProjectId(meeting.projeto_id) }}</p>
+              <p class="text-[12px] font-bold text-[var(--color-text-tertiary)] mt-1 uppercase tracking-widest">Reunião de Acompanhamento</p>
             </div>
 
-            <!-- Indicator -->
-            <div class="relative pt-2">
-              <div 
+            <div class="flex items-center justify-between">
+              <span 
                 :class="[
-                  selectedMeetingId === meeting.id ? 'ring-4 ring-blue-100' : '',
-                  'w-3 h-3 rounded-full border-2 border-white ring-1 ring-slate-200 z-10 relative transition-all',
-                  meeting.status === 'Realizada' ? 'bg-brand-emerald' : meeting.status === 'No_Show' ? 'bg-rose-500' : 'bg-brand-blue'
+                  meeting.status === 'Realizada' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : meeting.status === 'No_Show' ? 'bg-rose-50 text-rose-600 border-rose-100' : 'bg-blue-50 text-blue-600 border-blue-100',
+                  'flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border'
                 ]"
-              ></div>
-            </div>
-
-            <!-- Card -->
-            <div 
-              :class="[
-                selectedMeetingId === meeting.id ? 'bg-blue-50/50 border-brand-blue/20 ring-1 ring-brand-blue/10 shadow-sm' : 'border-slate-100 hover:border-slate-200',
-                'flex-1 p-4 rounded-2xl border transition-all flex items-center justify-between'
-              ]"
-            >
-              <div>
-                <p class="font-bold text-slate-900 truncate max-w-[200px]">{{ getClientNameByProjectId(meeting.projeto_id) }} - Meeting</p>
-                <p class="text-xs font-medium text-slate-500 mt-0.5">Project: <span class="text-slate-700">{{ projects[meeting.projeto_id]?.id.substring(0,8) }}...</span></p>
-              </div>
-
-              <div class="flex flex-col items-end gap-2">
-                <div 
-                  :class="[
-                    meeting.status === 'Realizada' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : meeting.status === 'No_Show' ? 'bg-rose-50 text-rose-600 border-rose-100' : 'bg-blue-50 text-blue-600 border-blue-100',
-                    'flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border'
-                  ]"
-                >
-                  <CheckCircle2 v-if="meeting.status === 'Realizada'" class="w-3 h-3" />
-                  <Clock v-else-if="meeting.status === 'Agendada'" class="w-3 h-3" />
-                  <XCircle v-else class="w-3 h-3" />
-                  {{ getStatusLabel(meeting.status) }}
-                </div>
-                <button 
-                  @click.stop="openEditMeeting(meeting)"
-                  class="text-[10px] font-bold text-slate-400 hover:text-brand-blue transition-colors uppercase tracking-wider"
-                >
-                  Edit
-                </button>
-              </div>
+              >
+                {{ getStatusLabel(meeting.status) }}
+              </span>
+              <button 
+                @click.stop="openEditMeeting(meeting)"
+                class="text-[11px] font-bold text-[var(--color-text-tertiary)] hover:text-[var(--color-primary)] opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                EDITAR
+              </button>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Meeting Details Column -->
-      <div v-if="selectedMeeting" class="bg-white p-8 rounded-[24px] shadow-soft border border-slate-50 space-y-8 sticky top-28">
-        <div>
-          <h2 class="text-xl font-bold text-slate-900 mb-6">Meeting Details</h2>
+      <!-- Meeting Details -->
+      <div v-if="selectedMeeting" class="lg:col-span-3 bg-[var(--color-surface)] rounded-[var(--radius-apple)] shadow-premium border border-[var(--color-border-soft)] sticky top-28 overflow-hidden">
+        <div class="p-10 border-b border-[var(--color-border-soft)]">
+          <div class="flex justify-between items-start mb-8">
+            <div class="space-y-1">
+              <h2 class="text-2xl font-bold text-[var(--color-text-primary)] tracking-tight">{{ getClientNameByProjectId(selectedMeeting.projeto_id) }}</h2>
+              <p class="text-[var(--color-text-tertiary)] font-bold text-[12px] uppercase tracking-widest">Detalhes do Encontro</p>
+            </div>
+            <div :class="[selectedMeeting.status === 'Realizada' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600', 'px-4 py-2 rounded-xl text-xs font-bold border border-transparent']">
+              {{ getStatusLabel(selectedMeeting.status) }}
+            </div>
+          </div>
           
-          <div class="space-y-4">
-            <div class="flex items-center gap-2">
-              <span class="text-sm font-bold text-slate-900">Client:</span>
-              <span class="text-sm font-medium text-slate-500">{{ getClientNameByProjectId(selectedMeeting.projeto_id) }}</span>
+          <div class="grid grid-cols-2 gap-8">
+            <div class="space-y-1.5">
+              <div class="flex items-center gap-2 text-[var(--color-text-tertiary)]">
+                <CalendarDays class="w-4 h-4" />
+                <span class="text-[11px] font-bold uppercase tracking-widest">Data e Hora</span>
+              </div>
+              <p class="text-sm font-bold text-[var(--color-text-primary)]">{{ new Date(selectedMeeting.data_agendada).toLocaleString('pt-BR', { dateStyle: 'long', timeStyle: 'short' }) }}</p>
             </div>
-            <div class="flex items-center gap-2">
-              <span class="text-sm font-bold text-slate-900">Date/Time:</span>
-              <span class="text-sm font-medium text-slate-500">{{ new Date(selectedMeeting.data_agendada).toLocaleString() }}</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="text-sm font-bold text-slate-900">Status:</span>
-              <span :class="[selectedMeeting.status === 'Realizada' ? 'text-brand-emerald' : 'text-brand-blue', 'text-sm font-bold']">
-                {{ getStatusLabel(selectedMeeting.status) }}
-              </span>
+            <div class="space-y-1.5">
+              <div class="flex items-center gap-2 text-[var(--color-text-tertiary)]">
+                <Package class="w-4 h-4" />
+                <span class="text-[11px] font-bold uppercase tracking-widest">Projeto Relacionado</span>
+              </div>
+              <p class="text-sm font-bold text-[var(--color-text-primary)] font-mono">ID: {{ selectedMeeting.projeto_id.substring(0,8) }}...</p>
             </div>
           </div>
         </div>
 
-        <div class="border-t border-slate-100 pt-8 space-y-4">
-          <h3 class="text-lg font-bold text-slate-900">Technical Notes</h3>
-          
-          <!-- Rich Text Toolbar Placeholder -->
-          <div class="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-            <div class="bg-slate-50/50 p-3 border-b border-slate-200 flex flex-wrap gap-1.5">
-              <button class="p-1.5 hover:bg-white rounded transition-colors text-slate-500"><Bold class="w-4 h-4" /></button>
-              <button class="p-1.5 hover:bg-white rounded transition-colors text-slate-500"><Italic class="w-4 h-4" /></button>
-              <button class="p-1.5 hover:bg-white rounded transition-colors text-slate-500"><Underline class="w-4 h-4" /></button>
-              <button class="p-1.5 hover:bg-white rounded transition-colors text-slate-500"><Strikethrough class="w-4 h-4" /></button>
-              <div class="w-px h-4 bg-slate-200 mx-1 mt-1.5"></div>
-              <button class="p-1.5 hover:bg-white rounded transition-colors text-slate-500"><List class="w-4 h-4" /></button>
-              <button class="p-1.5 hover:bg-white rounded transition-colors text-slate-500"><ListOrdered class="w-4 h-4" /></button>
-              <div class="w-px h-4 bg-slate-200 mx-1 mt-1.5"></div>
-              <button class="p-1.5 hover:bg-white rounded transition-colors text-slate-500"><LinkIcon class="w-4 h-4" /></button>
-              <button class="p-1.5 hover:bg-white rounded transition-colors text-slate-500"><ImageIcon class="w-4 h-4" /></button>
-              <button class="p-1.5 hover:bg-white rounded transition-colors text-slate-500"><TableIcon class="w-4 h-4" /></button>
-              <button class="p-1.5 hover:bg-white rounded transition-colors text-slate-500 ml-auto"><Code class="w-4 h-4" /></button>
+        <div class="p-10 space-y-6">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-bold text-[var(--color-text-primary)]">Notas Técnicas</h3>
+            <div class="flex gap-2">
+              <button class="p-2 hover:bg-zinc-100 rounded-lg text-[var(--color-text-tertiary)]"><Bold class="w-4 h-4" /></button>
+              <button class="p-2 hover:bg-zinc-100 rounded-lg text-[var(--color-text-tertiary)]"><List class="w-4 h-4" /></button>
+              <button class="p-2 hover:bg-zinc-100 rounded-lg text-[var(--color-text-tertiary)]"><LinkIcon class="w-4 h-4" /></button>
             </div>
+          </div>
+          
+          <div class="relative">
             <textarea 
               v-model="selectedMeeting.observacoes"
-              class="w-full p-6 min-h-[250px] focus:outline-none text-slate-700 leading-relaxed placeholder:text-slate-300 font-medium"
-              placeholder="Start typing your technical notes here..."
+              class="w-full bg-zinc-50 border border-[var(--color-border-soft)] rounded-2xl p-6 min-h-[300px] focus:outline-none focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-[var(--color-primary)] text-[var(--color-text-primary)] leading-relaxed font-medium transition-all placeholder:text-[var(--color-text-tertiary)]"
+              placeholder="Descreva os pontos discutidos, decisões tomadas e próximos passos..."
             ></textarea>
+            <div class="absolute bottom-4 right-4 flex items-center gap-2 text-[10px] font-bold text-[var(--color-text-tertiary)]">
+              <span>SALVAMENTO AUTOMÁTICO ATIVO</span>
+              <div class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- SlideOver for Creating/Editing -->
+    <!-- SlideOver -->
     <SlideOver 
       :show="showSlideOver" 
       :title="editingMeeting ? 'Editar Reunião' : 'Nova Reunião'"
-      :description="editingMeeting ? 'Atualize os detalhes do agendamento.' : 'Agende uma nova reunião técnica com o cliente.'"
+      :description="editingMeeting ? 'Atualize as informações do agendamento.' : 'Reserve um horário para alinhamento com o cliente.'"
       @close="showSlideOver = false"
     >
       <ReuniaoForm 
@@ -281,16 +251,11 @@ onMounted(fetchData)
       />
       
       <template #footer>
-        <button 
-          @click="showSlideOver = false"
-          class="px-5 py-2.5 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition-all"
-        >
-          Cancelar
-        </button>
+        <button @click="showSlideOver = false" class="px-6 py-3 rounded-full font-bold text-[var(--color-text-secondary)] hover:bg-zinc-100 text-sm transition-all">Cancelar</button>
         <button 
           @click="reuniaoFormRef?.submit()"
           :disabled="isSaving"
-          class="bg-brand-blue hover:bg-brand-blue/90 disabled:opacity-50 text-white px-8 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-brand-blue/20"
+          class="bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] disabled:opacity-50 text-white px-8 py-3 rounded-full font-bold flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-blue-500/20 text-sm"
         >
           <Loader2 v-if="isSaving" class="w-4 h-4 animate-spin" />
           <Save v-else class="w-4 h-4" />

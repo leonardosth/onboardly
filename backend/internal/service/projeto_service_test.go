@@ -16,6 +16,7 @@ type mockProjetoRepository struct {
 	mockGetEveryone func() ([]*models.Projeto, error)
 	mockUpdate      func(p *models.Projeto) error
 	mockDelete      func(id uuid.UUID) error
+	mockGetDashboardStats func() (*models.DashboardStats, error)
 }
 
 func (m *mockProjetoRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Projeto, error) {
@@ -35,6 +36,9 @@ func (m *mockProjetoRepository) Update(ctx context.Context, p *models.Projeto) e
 }
 func (m *mockProjetoRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return m.mockDelete(id)
+}
+func (m *mockProjetoRepository) GetDashboardStats(ctx context.Context) (*models.DashboardStats, error) {
+	return m.mockGetDashboardStats()
 }
 
 func TestCreateProjeto(t *testing.T) {

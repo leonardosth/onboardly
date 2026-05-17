@@ -12,7 +12,6 @@ import {
   ArrowUpRight,
   Clock,
   CheckCircle2,
-  AlertCircle,
   Loader2,
   ChevronDown,
   Save
@@ -31,7 +30,7 @@ const clients = ref<Record<string, Cliente>>({})
 const analistas = ref<Record<string, Analista>>({})
 const loading = ref(true)
 const searchQuery = ref('')
-const selectedStatus = ref('All')
+const selectedStatus = ref('Todos Status')
 
 const showSlideOver = ref(false)
 const selectedProject = ref<Projeto | undefined>(undefined)
@@ -39,23 +38,22 @@ const isSaving = ref(false)
 const projectFormRef = ref<any>(null)
 
 const statusConfig = {
-// ... existing statusConfig ...
   'Backlog': { 
     label: 'Backlog', 
-    color: 'text-brand-blue bg-brand-blue/10', 
-    dot: 'bg-brand-blue',
+    color: 'text-zinc-500 bg-zinc-100', 
+    dot: 'bg-zinc-400',
     icon: Clock
   },
   'Em_Andamento': { 
     label: 'Em Andamento', 
-    color: 'text-brand-amber bg-brand-amber/10', 
-    dot: 'bg-brand-amber',
+    color: 'text-blue-600 bg-blue-50', 
+    dot: 'bg-blue-500',
     icon: ArrowUpRight
   },
   'Concluido': { 
     label: 'Concluído', 
-    color: 'text-brand-emerald bg-brand-emerald/10', 
-    dot: 'bg-brand-emerald',
+    color: 'text-emerald-600 bg-emerald-50', 
+    dot: 'bg-emerald-500',
     icon: CheckCircle2
   }
 }
@@ -70,18 +68,8 @@ const fetchData = async () => {
     ])
     
     projects.value = projectsData
-    
-    // Map clients and analistas for easy lookup
-    clients.value = clientsData.reduce((acc, client) => {
-      acc[client.id] = client
-      return acc
-    }, {} as Record<string, Cliente>)
-    
-    analistas.value = analistasData.reduce((acc, analista) => {
-      acc[analista.id] = analista
-      return acc
-    }, {} as Record<string, Analista>)
-
+    clients.value = clientsData.reduce((acc, client) => { acc[client.id] = client; return acc }, {} as Record<string, Cliente>)
+    analistas.value = analistasData.reduce((acc, analista) => { acc[analista.id] = analista; return acc }, {} as Record<string, Analista>)
   } catch (error) {
     console.error('Erro ao buscar dados:', error)
     toastStore.error('Erro ao carregar dados.')
@@ -92,16 +80,11 @@ const fetchData = async () => {
 
 const filteredProjects = computed(() => {
   return projects.value.filter(p => {
-    const matchesStatus = selectedStatus.value === 'All' || p.status_projeto === selectedStatus.value
-    
+    const matchesStatus = selectedStatus.value === 'Todos Status' || p.status_projeto === selectedStatus.value
     const query = searchQuery.value.toLowerCase()
     const clientName = clients.value[p.cliente_id]?.nome.toLowerCase() || ''
     const analistaName = analistas.value[p.analista_id]?.nome.toLowerCase() || ''
-    const matchesSearch = !searchQuery.value || 
-                          clientName.includes(query) || 
-                          analistaName.includes(query) ||
-                          p.id.includes(query)
-
+    const matchesSearch = !searchQuery.value || clientName.includes(query) || analistaName.includes(query)
     return matchesStatus && matchesSearch
   })
 })
@@ -148,154 +131,142 @@ const handleSave = async (formData: any) => {
 </script>
 
 <template>
-  <div class="space-y-8">
-    <!-- Header Action Bar -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-      <div>
-        <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Projetos</h1>
-        <p class="text-slate-500 font-medium mt-1">Gerencie o pipeline de implantação dos seus clientes.</p>
+  <div class="space-y-10">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+      <div class="space-y-1">
+        <h1 class="text-3xl font-bold tracking-tight text-[var(--color-text-primary)]">Projetos</h1>
+        <p class="text-[var(--color-text-secondary)] font-medium">Acompanhe e gerencie cada etapa da jornada de implementação.</p>
+      </div>
+      <button 
+        @click="openNewProject"
+        class="bg-[var(--color-primary)] text-white px-6 py-3 rounded-full font-bold flex items-center gap-2 hover:bg-[var(--color-primary-hover)] transition-all shadow-lg shadow-blue-500/20 active:scale-95 text-sm"
+      >
+        <Plus class="w-5 h-5" />
+        Novo Projeto
+      </button>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="bg-[var(--color-surface)] p-2 rounded-2xl shadow-premium border border-[var(--color-border-soft)] flex flex-col md:flex-row items-center gap-2">
+      <div class="relative flex-1 w-full md:w-auto">
+        <Search class="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" />
+        <input 
+          v-model="searchQuery"
+          type="text" 
+          placeholder="Buscar projeto por cliente ou analista..." 
+          class="w-full bg-transparent border-none focus:ring-0 pl-11 pr-4 py-3 text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-tertiary)]"
+        />
       </div>
 
-      <div class="flex items-center gap-3">
-        <div class="relative group">
-          <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-brand-blue transition-colors" />
-          <input 
-            v-model="searchQuery"
-            type="text" 
-            placeholder="Buscar projeto..." 
-            class="pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl w-64 focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue transition-all"
-          />
-        </div>
-        
-        <div class="relative min-w-[160px]">
+      <div class="h-8 w-px bg-[var(--color-border-divider)] hidden md:block"></div>
+
+      <div class="flex items-center gap-2 w-full md:w-auto px-2">
+        <div class="flex items-center gap-2 text-sm font-semibold text-[var(--color-text-secondary)] py-3 px-2">
+          <span>Status:</span>
           <select 
             v-model="selectedStatus"
-            class="w-full appearance-none bg-white border border-slate-200 rounded-xl px-4 py-2.5 pr-10 text-slate-600 font-medium focus:outline-none focus:ring-2 focus:ring-brand-blue/20 transition-all cursor-pointer"
+            class="bg-transparent border-none focus:ring-0 text-sm font-bold text-[var(--color-primary)] cursor-pointer p-0"
           >
-            <option value="All">Todos Status</option>
+            <option>Todos Status</option>
             <option value="Backlog">Backlog</option>
             <option value="Em_Andamento">Em Andamento</option>
             <option value="Concluido">Concluído</option>
           </select>
-          <ChevronDown class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
         </div>
-
-        <button 
-          @click="openNewProject"
-          class="bg-brand-blue hover:bg-brand-blue/90 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-brand-blue/20"
-        >
-          <Plus class="w-5 h-5" />
-          Novo Projeto
-        </button>
       </div>
     </div>
 
-    <!-- Loading State -->
-    <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div v-for="i in 6" :key="i" class="h-64 bg-white rounded-[24px] border border-slate-100 flex items-center justify-center">
-        <Loader2 class="w-8 h-8 text-slate-200 animate-spin" />
-      </div>
+    <!-- Grid Container -->
+    <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <div v-for="i in 6" :key="i" class="h-64 bg-zinc-50 rounded-[var(--radius-apple)] animate-pulse border border-zinc-100"></div>
     </div>
 
-    <!-- Empty State -->
-    <div v-else-if="filteredProjects.length === 0" class="bg-white rounded-[32px] p-20 border border-slate-100 flex flex-col items-center text-center shadow-soft">
-      <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6">
-        <Package class="w-10 h-10 text-slate-300" />
+    <div v-else-if="filteredProjects.length === 0" class="bg-[var(--color-surface)] rounded-[var(--radius-apple)] p-20 border border-[var(--color-border-soft)] shadow-premium flex flex-col items-center text-center">
+      <div class="w-20 h-20 bg-zinc-50 rounded-full flex items-center justify-center mb-6">
+        <Package class="w-10 h-10 text-zinc-300" />
       </div>
-      <h3 class="text-xl font-bold text-slate-900">Nenhum projeto encontrado</h3>
-      <p class="text-slate-500 max-w-sm mt-2">Não encontramos nenhum projeto com os critérios de busca ou ainda não há projetos cadastrados.</p>
-      <button 
-        @click="searchQuery = ''; selectedStatus = 'All'" 
-        v-if="searchQuery || selectedStatus !== 'All'" 
-        class="mt-6 text-brand-blue font-bold hover:underline"
-      >
-        Limpar filtros
-      </button>
+      <h3 class="text-xl font-bold text-[var(--color-text-primary)]">Nenhum projeto encontrado</h3>
+      <p class="text-[var(--color-text-tertiary)] max-w-sm mt-2 font-medium">Não há projetos que correspondam aos seus filtros ou busca.</p>
     </div>
 
-    <!-- Projects Grid -->
-    <div v-if="!loading && filteredProjects.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       <article 
         v-for="project in filteredProjects" 
         :key="project.id"
         @click="openEditProject(project)"
-        class="bg-white rounded-[24px] p-6 border border-slate-50 shadow-soft hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group cursor-pointer"
+        class="bg-[var(--color-surface)] rounded-[var(--radius-apple)] p-8 border border-[var(--color-border-soft)] shadow-premium hover:shadow-premium-hover hover:-translate-y-1.5 transition-all duration-300 group cursor-pointer flex flex-col"
       >
-        <div class="flex justify-between items-start mb-6">
+        <div class="flex justify-between items-start mb-8">
           <div 
             :class="[
-              'px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5',
-              statusConfig[project.status_projeto]?.color || 'bg-slate-100 text-slate-500'
+              'px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 border border-transparent',
+              statusConfig[project.status_projeto]?.color || 'bg-zinc-100 text-zinc-500'
             ]"
           >
-            <div :class="['w-1.5 h-1.5 rounded-full', statusConfig[project.status_projeto]?.dot || 'bg-slate-400']"></div>
+            <div :class="['w-1.5 h-1.5 rounded-full', statusConfig[project.status_projeto]?.dot || 'bg-zinc-400']"></div>
             {{ statusConfig[project.status_projeto]?.label || project.status_projeto }}
           </div>
-          <button class="p-1 text-slate-300 hover:text-slate-600 transition-colors">
+          <button class="p-1.5 text-zinc-300 hover:text-zinc-600 transition-colors">
             <MoreVertical class="w-5 h-5" />
           </button>
         </div>
 
-        <div class="space-y-4">
-          <div>
-            <div class="flex items-center gap-2 text-slate-400 mb-1">
-              <Building2 class="w-3.5 h-3.5" />
+        <div class="space-y-6 flex-1">
+          <div class="space-y-1.5">
+            <div class="flex items-center gap-2 text-[var(--color-text-tertiary)]">
+              <Building2 class="w-4 h-4" />
               <span class="text-[11px] font-bold uppercase tracking-widest">Cliente</span>
             </div>
-            <h3 class="text-lg font-bold text-slate-900 group-hover:text-brand-blue transition-colors">
+            <h3 class="text-xl font-bold text-[var(--color-text-primary)] group-hover:text-[var(--color-primary)] transition-colors tracking-tight">
               {{ clients[project.cliente_id]?.nome || 'Carregando...' }}
             </h3>
           </div>
 
-          <div class="grid grid-cols-2 gap-4 pt-4 border-t border-slate-50">
-            <div>
-              <div class="flex items-center gap-2 text-slate-400 mb-1">
-                <User class="w-3.5 h-3.5" />
+          <div class="grid grid-cols-2 gap-6 pt-6 border-t border-[var(--color-border-soft)]">
+            <div class="space-y-1.5">
+              <div class="flex items-center gap-2 text-[var(--color-text-tertiary)]">
+                <User class="w-4 h-4" />
                 <span class="text-[11px] font-bold uppercase tracking-widest">Analista</span>
               </div>
-              <p class="text-sm font-semibold text-slate-700 truncate">
+              <p class="text-sm font-bold text-[var(--color-text-primary)] truncate">
                 {{ analistas[project.analista_id]?.nome || 'Não atribuído' }}
               </p>
             </div>
-            <div>
-              <div class="flex items-center gap-2 text-slate-400 mb-1">
-                <Calendar class="w-3.5 h-3.5" />
+            <div class="space-y-1.5">
+              <div class="flex items-center gap-2 text-[var(--color-text-tertiary)]">
+                <Calendar class="w-4 h-4" />
                 <span class="text-[11px] font-bold uppercase tracking-widest">Início</span>
               </div>
-              <p class="text-sm font-mono font-bold text-slate-700">
+              <p class="text-sm font-bold text-[var(--color-text-primary)] font-mono">
                 {{ formatDate(project.data_contratacao) }}
               </p>
             </div>
           </div>
         </div>
 
-        <div class="mt-6 flex items-center justify-between">
+        <div class="mt-8 pt-6 border-t border-[var(--color-border-soft)] flex items-center justify-between">
           <div class="flex -space-x-2">
-            <div class="w-8 h-8 rounded-full bg-brand-blue text-white flex items-center justify-center text-[10px] font-bold border-2 border-white">
-              {{ clients[project.cliente_id]?.nome?.substring(0,2).toUpperCase() || '?' }}
+            <div class="w-8 h-8 rounded-lg bg-zinc-100 flex items-center justify-center text-[10px] font-bold text-[var(--color-text-primary)] border-2 border-white">
+              {{ clients[project.cliente_id]?.nome?.substring(0,1).toUpperCase() || '?' }}
             </div>
-            <div class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center text-[10px] font-bold border-2 border-white">
+            <div class="w-8 h-8 rounded-lg bg-[var(--color-primary)] text-white flex items-center justify-center text-[10px] font-bold border-2 border-white">
               {{ analistas[project.analista_id]?.nome?.substring(0,1).toUpperCase() || '?' }}
             </div>
           </div>
           
-          <router-link 
-            :to="`/projetos/${project.id}`"
-            @click.stop
-            class="flex items-center gap-1 text-xs font-bold text-brand-blue hover:gap-2 transition-all"
-          >
-            Detalhes
-            <ArrowUpRight class="w-3.5 h-3.5" />
-          </router-link>
+          <button class="flex items-center gap-1.5 text-[13px] font-bold text-[var(--color-primary)] group-hover:translate-x-1 transition-transform">
+            Ver detalhes
+            <ArrowUpRight class="w-4 h-4" />
+          </button>
         </div>
       </article>
     </div>
 
-    <!-- SlideOver for Creating/Editing -->
+    <!-- SlideOver -->
     <SlideOver 
       :show="showSlideOver" 
       :title="selectedProject ? 'Editar Projeto' : 'Novo Projeto'"
-      :description="selectedProject ? 'Atualize as informações do projeto selecionado.' : 'Preencha os dados para iniciar uma nova implantação.'"
+      :description="selectedProject ? 'Atualize o cronograma e atribuição do projeto.' : 'Configure os parâmetros iniciais da nova implantação.'"
       @close="showSlideOver = false"
     >
       <ProjetoForm 
@@ -307,14 +278,14 @@ const handleSave = async (formData: any) => {
       <template #footer>
         <button 
           @click="showSlideOver = false"
-          class="px-5 py-2.5 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition-all"
+          class="px-6 py-3 rounded-full font-bold text-[var(--color-text-secondary)] hover:bg-zinc-100 transition-all text-sm"
         >
           Cancelar
         </button>
         <button 
           @click="projectFormRef?.submit()"
           :disabled="isSaving"
-          class="bg-brand-blue hover:bg-brand-blue/90 disabled:opacity-50 text-white px-8 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-brand-blue/20"
+          class="bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] disabled:opacity-50 text-white px-8 py-3 rounded-full font-bold flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-blue-500/20 text-sm"
         >
           <Loader2 v-if="isSaving" class="w-4 h-4 animate-spin" />
           <Save v-else class="w-4 h-4" />
@@ -324,9 +295,3 @@ const handleSave = async (formData: any) => {
     </SlideOver>
   </div>
 </template>
-
-<style scoped>
-.shadow-soft {
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 10px -2px rgba(0, 0, 0, 0.03);
-}
-</style>

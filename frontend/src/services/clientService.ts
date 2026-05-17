@@ -1,32 +1,32 @@
-import axios from 'axios';
 import type { Cliente } from '../types';
-
-const api = axios.create({
-  baseURL: '/api',
-});
+import { apiFetch } from './api';
 
 export const clientService = {
   async getAll(): Promise<Cliente[]> {
-    const { data } = await api.get<Cliente[]>('/clientes');
-    return data || [];
+    return apiFetch('/clientes') || [];
   },
 
   async getById(id: string): Promise<Cliente> {
-    const { data } = await api.get<Cliente>(`/clientes/${id}`);
-    return data;
+    return apiFetch(`/clientes/${id}`);
   },
 
   async create(cliente: Partial<Cliente>): Promise<Cliente> {
-    const { data } = await api.post<Cliente>('/clientes', cliente);
-    return data;
+    return apiFetch('/clientes', {
+      method: 'POST',
+      body: JSON.stringify(cliente)
+    });
   },
 
   async update(id: string, cliente: Partial<Cliente>): Promise<Cliente> {
-    const { data } = await api.put<Cliente>(`/clientes/${id}`, cliente);
-    return data;
+    return apiFetch(`/clientes/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(cliente)
+    });
   },
 
   async delete(id: string): Promise<void> {
-    await api.delete(`/clientes/${id}`);
+    return apiFetch(`/clientes/${id}`, {
+      method: 'DELETE'
+    });
   }
 };

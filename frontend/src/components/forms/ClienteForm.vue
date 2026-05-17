@@ -32,28 +32,28 @@ defineExpose({ submit })
 </script>
 
 <template>
-  <form @submit.prevent="submit" class="space-y-6" id="cliente-form">
-    <div class="space-y-2">
-      <label for="nome" class="text-sm font-bold text-slate-700 uppercase tracking-wider">Razão Social / Nome</label>
+  <form @submit.prevent="submit" class="space-y-8" id="cliente-form">
+    <div class="space-y-2.5">
+      <label for="nome" class="text-[14px] font-semibold text-[var(--color-text-primary)] px-0.5">Razão Social / Nome</label>
       <input
         id="nome"
         v-model="form.nome"
         type="text"
         required
-        placeholder="Ex: Acme Corp"
-        class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue transition-all"
+        placeholder="Digite o nome da empresa"
+        class="w-full px-4 py-3.5 rounded-[var(--radius-apple-sm)] bg-zinc-100/50 border border-zinc-200/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10 focus:border-[var(--color-primary)] transition-all placeholder:text-[var(--color-text-tertiary)] text-[var(--color-text-primary)] font-medium"
       />
     </div>
 
-    <div class="space-y-2">
-      <label for="cnpj" class="text-sm font-bold text-slate-700 uppercase tracking-wider">CNPJ</label>
+    <div class="space-y-2.5">
+      <label for="cnpj" class="text-[14px] font-semibold text-[var(--color-text-primary)] px-0.5">CNPJ</label>
       <input
         id="cnpj"
         v-model="form.cnpj"
         type="text"
         required
         placeholder="00.000.000/0000-00"
-        class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue transition-all font-mono"
+        class="w-full px-4 py-3.5 rounded-[var(--radius-apple-sm)] bg-zinc-100/50 border border-zinc-200/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10 focus:border-[var(--color-primary)] transition-all font-mono placeholder:text-[var(--color-text-tertiary)] text-[var(--color-text-primary)]"
       />
     </div>
   </form>

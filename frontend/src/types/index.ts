@@ -27,6 +27,25 @@ export interface Projeto {
   updated_at: string;
 }
 
+export interface Usuario {
+  id: string;
+  nome: string;
+  email: string;
+  cargo: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: Usuario;
+}
+
+export interface LoginRequest {
+  email: string;
+  senha: string;
+}
+
 export interface Reuniao {
   id: string;
   projeto_id: string;

@@ -1,32 +1,32 @@
-import axios from 'axios';
 import type { Reuniao } from '../types';
-
-const api = axios.create({
-  baseURL: '/api',
-});
+import { apiFetch } from './api';
 
 export const reuniaoService = {
   async getAll(): Promise<Reuniao[]> {
-    const { data } = await api.get<Reuniao[]>('/reunioes');
-    return data || [];
+    return apiFetch('/reunioes') || [];
   },
 
   async getById(id: string): Promise<Reuniao> {
-    const { data } = await api.get<Reuniao>(`/reunioes/${id}`);
-    return data;
+    return apiFetch(`/reunioes/${id}`);
   },
 
   async create(reuniao: Partial<Reuniao>): Promise<Reuniao> {
-    const { data } = await api.post<Reuniao>('/reunioes', reuniao);
-    return data;
+    return apiFetch('/reunioes', {
+      method: 'POST',
+      body: JSON.stringify(reuniao)
+    });
   },
 
   async update(id: string, reuniao: Partial<Reuniao>): Promise<Reuniao> {
-    const { data } = await api.put<Reuniao>(`/reunioes/${id}`, reuniao);
-    return data;
+    return apiFetch(`/reunioes/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(reuniao)
+    });
   },
 
   async delete(id: string): Promise<void> {
-    await api.delete(`/reunioes/${id}`);
+    return apiFetch(`/reunioes/${id}`, {
+      method: 'DELETE'
+    });
   }
 };

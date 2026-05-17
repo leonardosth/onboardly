@@ -1,35 +1,29 @@
----
-## DESIGN_REPORT — Refinamento Final Frontend
+# DESIGN_REPORT — Native App Feel & Interface Immersiveness
+
 **Arquiteta:** LYRA (Design Agent)
 
 ### Componentes Entregues
-- **ToastContainer.vue**: Gerenciador global de notificações com suporte a Success, Error, Info e Warning.
-- **DashboardLayout.vue (Refatorado)**: 
-  - Header com dropdown de perfil rico em detalhes.
-  - Sidebar com estados de hover e tooltips aprimorados.
-  - Funcionalidade de Logout integrada com feedback visual.
-- **SlideOver.vue (Ajustado)**: Transições mais fluidas e backdrop-blur aprimorado.
-- **Views (Clientes, Projetos, Reuniões)**: Integradas com o sistema de Toasts para feedback de operações CRUD.
+
+- **Global Styles (style.css):**
+  - Implementado bloqueio de seleção (`user-select: none`) no `:root`.
+  - Implementado `caret-color: transparent` global para remover o cursor piscante em elementos não-interativos.
+  - Definido `cursor: default` no `body` para garantir que o cursor de "seta" seja o padrão em toda a interface.
+  - Criado whitelist para `input`, `textarea`, `[contenteditable]` e a classe utilitária `.selectable-text`, restaurando `user-select: text`, `caret-color: auto` e `cursor: text`.
+  - Garantido que elementos interativos (`button`, `a`, `select`, etc.) mantenham o `cursor: pointer`.
 
 ### Fontes Utilizadas
-- **Instrument Sans**: Definida como padrão no Tailwind config (anteriormente) e reforçada na hierarquia visual.
-- **JetBrains Mono**: Utilizada para dados técnicos e IDs.
+- **Inter / System-ui:** Mantidas como base, agora com comportamento de renderização e interação refinado.
 
 ### Contraste Verificado
-- **Texto Emerald sobre Fundo Emerald-50**: 4.8:1 — [AA]
-- **Texto Rose sobre Fundo Rose-50**: 4.6:1 — [AA]
-- **Texto Slate-900 sobre Branco**: 16.5:1 — [AAA]
+- As alterações não impactaram cores, apenas comportamento de interação e cursor. O contraste WCAG AA permanece preservado.
 
 ### Responsividade
-- Breakpoints: LG (1024px) para transição Sidebar -> Mobile Menu.
-- Comportamento: Sidebar colapsável que se transforma em Drawer no mobile.
+- O comportamento é consistente em todos os breakpoints. Em dispositivos touch, `-webkit-touch-callout: none` foi adicionado para evitar o menu de contexto de seleção nativo do iOS em elementos de UI.
 
 ### Pontos de Atenção para o QA
-- Validar se o Toast desaparece após 3 segundos (configuração padrão).
-- Testar o clique fora do dropdown de perfil no Header.
-- Verificar a animação de entrada do Slide-over em diferentes resoluções.
+- Verificar se cliques duplos em títulos (ex: "Relatórios e Performance") não resultam em seleção de texto ou cursor I-beam.
+- Validar se o campo de "Busca" no header e os formulários de cadastro continuam permitindo digitação e seleção normalmente.
+- Testar se o cursor muda corretamente para a "mão" (pointer) ao passar sobre links e botões da sidebar.
 
 ### Débito de Design Declarado
-- **DarkMode**: A estrutura de cores suporta, mas o switch de tema ainda não foi implementado.
-- **Skeleton Loaders**: Substituídos por spinners básicos por enquanto.
----
+- **Cópia de Dados:** Caso o usuário precise copiar dados estáticos (ex: números de relatórios), ele não conseguirá via seleção direta. Recomenda-se adicionar um botão "Copy to Clipboard" ou aplicar a classe `.selectable-text` especificamente nesses campos em iterações futuras se houver demanda.

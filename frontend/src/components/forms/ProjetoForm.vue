@@ -55,54 +55,54 @@ defineExpose({ submit })
 </script>
 
 <template>
-  <form @submit.prevent="submit" class="space-y-6">
-    <div class="space-y-2">
-      <label class="text-sm font-bold text-slate-700 uppercase tracking-wider">Cliente</label>
+  <form @submit.prevent="submit" class="space-y-8">
+    <div class="space-y-2.5">
+      <label class="text-[14px] font-semibold text-[var(--color-text-primary)] px-0.5">Cliente</label>
       <select
         v-model="form.cliente_id"
         required
-        class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue transition-all bg-white"
+        class="w-full px-4 py-3.5 rounded-[var(--radius-apple-sm)] bg-zinc-100/50 border border-zinc-200/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10 focus:border-[var(--color-primary)] transition-all text-[var(--color-text-primary)] font-medium appearance-none"
       >
         <option value="" disabled>Selecione um cliente</option>
         <option v-for="client in clients" :key="client.id" :value="client.id">{{ client.nome }}</option>
       </select>
     </div>
 
-    <div class="space-y-2">
-      <label class="text-sm font-bold text-slate-700 uppercase tracking-wider">Analista Responsável</label>
+    <div class="space-y-2.5">
+      <label class="text-[14px] font-semibold text-[var(--color-text-primary)] px-0.5">Analista Responsável</label>
       <select
         v-model="form.analista_id"
         required
-        class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue transition-all bg-white"
+        class="w-full px-4 py-3.5 rounded-[var(--radius-apple-sm)] bg-zinc-100/50 border border-zinc-200/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10 focus:border-[var(--color-primary)] transition-all text-[var(--color-text-primary)] font-medium appearance-none"
       >
         <option value="" disabled>Selecione um analista</option>
         <option v-for="analista in analistas" :key="analista.id" :value="analista.id">{{ analista.nome }}</option>
       </select>
     </div>
 
-    <div class="space-y-2">
-      <label class="text-sm font-bold text-slate-700 uppercase tracking-wider">Data de Contratação</label>
+    <div class="space-y-2.5">
+      <label class="text-[14px] font-semibold text-[var(--color-text-primary)] px-0.5">Data de Contratação</label>
       <input
         v-model="form.data_contratacao"
         type="date"
         required
-        class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue transition-all font-mono"
+        class="w-full px-4 py-3.5 rounded-[var(--radius-apple-sm)] bg-zinc-100/50 border border-zinc-200/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-[var(--color-primary)]/10 focus:border-[var(--color-primary)] transition-all font-mono text-[var(--color-text-primary)]"
       />
     </div>
 
-    <div class="space-y-2">
-      <label class="text-sm font-bold text-slate-700 uppercase tracking-wider">Status Inicial</label>
-      <div class="grid grid-cols-3 gap-3">
+    <div class="space-y-4">
+      <label class="text-[14px] font-semibold text-[var(--color-text-primary)] px-0.5">Status Inicial</label>
+      <div class="p-1 bg-zinc-100 rounded-xl flex gap-1">
         <button
           v-for="status in ['Backlog', 'Em_Andamento', 'Concluido']"
           :key="status"
           type="button"
           @click="form.status_projeto = status as any"
           :class="[
-            'px-3 py-2 rounded-lg border text-[10px] font-bold transition-all uppercase tracking-tighter',
+            'flex-1 px-3 py-2.5 rounded-lg text-xs font-bold transition-all duration-200',
             form.status_projeto === status 
-              ? 'border-brand-blue bg-brand-blue/5 text-brand-blue shadow-sm' 
-              : 'border-slate-100 text-slate-400 hover:bg-slate-50'
+              ? 'bg-white text-[var(--color-primary)] shadow-sm' 
+              : 'text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)]'
           ]"
         >
           {{ status.replace('_', ' ') }}

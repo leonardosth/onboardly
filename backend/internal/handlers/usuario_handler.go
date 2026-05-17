@@ -9,29 +9,30 @@ import (
 	"github.com/leonardosth/onboardly/internal/service"
 )
 
-type AnalistaHandler struct {
-	service *service.AnalistaService
+type UsuarioHandler struct {
+	service *service.UsuarioService
 }
 
-func NewAnalistaHandler(s *service.AnalistaService) *AnalistaHandler {
-	return &AnalistaHandler{service: s}
+func NewUsuarioHandler(s *service.UsuarioService) *UsuarioHandler {
+	return &UsuarioHandler{service: s}
 }
 
-func (h *AnalistaHandler) Create(w http.ResponseWriter, r *http.Request) {
-	var a models.Analista
-	if err := json.NewDecoder(r.Body).Decode(&a); err != nil {
+func (h *UsuarioHandler) CreateAnalista(w http.ResponseWriter, r *http.Request) {
+	var u models.Usuario
+	if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
 		respondJSON(w, http.StatusBadRequest, map[string]string{"error": "Payload inválido"})
 		return
 	}
 
-	if a.Nome == "" || a.Email == "" {
-		respondJSON(w, http.StatusBadRequest, map[string]string{"error": "Nome e Email são obrigatórios"})
+	u.Cargo = "Analista" // Força o cargo como Analista neste endpoint
+
+	if !validatePayload(w, u) {
 		return
 	}
 
-	err := h.service.Create(r.Context(), &a)
+	err := h.service.Create(r.Context(), &u)
 	if err != nil {
-		if err.Error() == "analista com esse email já cadastrado" {
+		if err.Error() == "usuário com esse email já cadastrado" {
 			respondJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
 			return
 		}
@@ -40,11 +41,11 @@ func (h *AnalistaHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	respondJSON(w, http.StatusCreated, a)
+	respondJSON(w, http.StatusCreated, u)
 }
 
-func (h *AnalistaHandler) GetAll(w http.ResponseWriter, r *http.Request) {
-	analistas, err := h.service.GetEveryone(r.Context())
+func (h *UsuarioHandler) GetAnalistas(w http.ResponseWriter, r *http.Request) {
+	analistas, err := h.service.GetByCargo(r.Context(), "Analista")
 	if err != nil {
 		slog.Error("Erro ao buscar analistas", "error", err)
 		respondJSON(w, http.StatusInternalServerError, map[string]string{"error": "Erro interno ao buscar analistas"})
@@ -52,51 +53,57 @@ func (h *AnalistaHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if analistas == nil {
-		analistas = []*models.Analista{}
+		analistas = []*models.Usuario{}
 	}
 
 	respondJSON(w, http.StatusOK, analistas)
 }
 
-func (h *AnalistaHandler) GetByID(w http.ResponseWriter, r *http.Request) {
+func (h *UsuarioHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id, err := getIDFromPath(r, "/analistas/")
 	if err != nil {
 		respondJSON(w, http.StatusBadRequest, map[string]string{"error": "ID inválido"})
 		return
 	}
 
-	analista, err := h.service.GetByID(r.Context(), id)
+	usuario, err := h.service.GetByID(r.Context(), id)
 	if err != nil {
-		slog.Error("Erro ao buscar analista por ID", "id", id, "error", err)
-		respondJSON(w, http.StatusInternalServerError, map[string]string{"error": "Erro interno ao buscar analista"})
+		slog.Error("Erro ao buscar usuário por ID", "id", id, "error", err)
+		respondJSON(w, http.StatusInternalServerError, map[string]string{"error": "Erro interno ao buscar usuário"})
 		return
 	}
 
-	if analista == nil {
-		respondJSON(w, http.StatusNotFound, map[string]string{"error": "Analista não encontrado"})
+	if usuario == nil {
+		respondJSON(w, http.StatusNotFound, map[string]string{"error": "Usuário não encontrado"})
 		return
 	}
 
-	respondJSON(w, http.StatusOK, analista)
+	respondJSON(w, http.StatusOK, usuario)
 }
 
-func (h *AnalistaHandler) Update(w http.ResponseWriter, r *http.Request) {
+func (h *UsuarioHandler) UpdateAnalista(w http.ResponseWriter, r *http.Request) {
 	id, err := getIDFromPath(r, "/analistas/")
 	if err != nil {
 		respondJSON(w, http.StatusBadRequest, map[string]string{"error": "ID inválido"})
 		return
 	}
 
-	var a models.Analista
-	if err := json.NewDecoder(r.Body).Decode(&a); err != nil {
+	var u models.Usuario
+	if err := json.NewDecoder(r.Body).Decode(&u); err != nil {
 		respondJSON(w, http.StatusBadRequest, map[string]string{"error": "Payload inválido"})
 		return
 	}
 
-	a.ID = id
-	err = h.service.Update(r.Context(), &a)
+	u.ID = id
+	u.Cargo = "Analista"
+
+	if !validatePayload(w, u) {
+		return
+	}
+
+	err = h.service.Update(r.Context(), &u)
 	if err != nil {
-		if err.Error() == "analista não encontrado" {
+		if err.Error() == "usuário não encontrado" {
 			respondJSON(w, http.StatusNotFound, map[string]string{"error": err.Error()})
 			return
 		}
@@ -108,7 +115,7 @@ func (h *AnalistaHandler) Update(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, http.StatusOK, map[string]string{"message": "Analista atualizado com sucesso"})
 }
 
-func (h *AnalistaHandler) Delete(w http.ResponseWriter, r *http.Request) {
+func (h *UsuarioHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, err := getIDFromPath(r, "/analistas/")
 	if err != nil {
 		respondJSON(w, http.StatusBadRequest, map[string]string{"error": "ID inválido"})
@@ -117,12 +124,12 @@ func (h *AnalistaHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	err = h.service.Delete(r.Context(), id)
 	if err != nil {
-		if err.Error() == "analista não encontrado" {
+		if err.Error() == "usuário não encontrado" {
 			respondJSON(w, http.StatusNotFound, map[string]string{"error": err.Error()})
 			return
 		}
-		slog.Error("Erro ao deletar analista", "id", id, "error", err)
-		respondJSON(w, http.StatusInternalServerError, map[string]string{"error": "Erro interno ao deletar analista"})
+		slog.Error("Erro ao deletar usuário", "id", id, "error", err)
+		respondJSON(w, http.StatusInternalServerError, map[string]string{"error": "Erro interno ao deletar usuário"})
 		return
 	}
 

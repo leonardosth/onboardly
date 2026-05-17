@@ -9,7 +9,7 @@ const layout = computed(() => route.meta.layout || 'dashboard')
 </script>
 
 <template>
-  <div class="app-container">
+  <div class="antialiased font-sans">
     <DashboardLayout v-if="layout === 'dashboard'" />
     <router-view v-else />
     
@@ -18,23 +18,14 @@ const layout = computed(() => route.meta.layout || 'dashboard')
 </template>
 
 <style>
-@reference "tailwindcss";
-
-body {
-  @apply antialiased text-slate-900 bg-slate-50;
+/* Reset and base transitions if needed */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
-/* Global scrollbar styling */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  @apply bg-transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-slate-200 rounded-full hover:bg-slate-300 transition-colors;
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

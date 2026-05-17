@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '../stores/authStore'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -24,8 +25,8 @@ const router = createRouter({
     {
       path: '/analistas',
       name: 'analistas',
-      component: () => import('../views/Dashboard/DashboardView.vue'), // Placeholder
-      meta: { title: 'Analistas' }
+      component: () => import('../views/Analistas/AnalistasView.vue'),
+      meta: { title: 'Analistas', requiresAdmin: true }
     },
     {
       path: '/projetos',
@@ -42,19 +43,23 @@ const router = createRouter({
     {
       path: '/relatorios',
       name: 'relatorios',
-      component: () => import('../views/Dashboard/DashboardView.vue'), // Placeholder
+      component: () => import('../views/Relatorios/RelatoriosView.vue'),
       meta: { title: 'Relatórios' }
     }
   ]
 })
 
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true'
+  const authStore = useAuthStore()
+  const isAuthenticated = authStore.isAuthenticated
+  const isAdmin = authStore.user?.cargo === 'Admin'
   
   if (to.name !== 'login' && !isAuthenticated) {
     next({ name: 'login' })
   } else if (to.name === 'login' && isAuthenticated) {
     next({ name: 'dashboard' })
+  } else if (to.meta.requiresAdmin && !isAdmin) {
+    next({ name: 'dashboard' }) // Redireciona se não for admin
   } else {
     next()
   }

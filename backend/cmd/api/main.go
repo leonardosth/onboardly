@@ -34,135 +34,104 @@ func main() {
 	defer db.Close()
 	slog.Info("Conectado ao PostgreSQL com sucesso.")
 
-	// Clientes
+	// --- Inicialização de Repositories ---
 	clientRepo := repository.NewClientPostgres(db)
-	clientService := service.NewClientService(clientRepo)
-	clientHandler := handlers.NewClientHandler(clientService)
-
-	// Analistas
-	analistaRepo := repository.NewAnalistaPostgres(db)
-	analistaService := service.NewAnalistaService(analistaRepo)
-	analistaHandler := handlers.NewAnalistaHandler(analistaService)
-
-	// Projetos
 	projetoRepo := repository.NewProjetoPostgres(db)
-	projetoService := service.NewProjetoService(projetoRepo)
-	projetoHandler := handlers.NewProjetoHandler(projetoService)
-
-	// Reuniões
 	reuniaoRepo := repository.NewReuniaoPostgres(db)
+	usuarioRepo := repository.NewUsuarioPostgres(db)
+
+	// --- Inicialização de Services ---
+	clientService := service.NewClientService(clientRepo)
+	usuarioService := service.NewUsuarioService(usuarioRepo)
+	projetoService := service.NewProjetoService(projetoRepo)
 	reuniaoService := service.NewReuniaoService(reuniaoRepo)
+	authService := service.NewAuthService(usuarioRepo)
+
+	// --- Inicialização de Handlers ---
+	clientHandler := handlers.NewClientHandler(clientService)
+	usuarioHandler := handlers.NewUsuarioHandler(usuarioService)
+	projetoHandler := handlers.NewProjetoHandler(projetoService)
 	reuniaoHandler := handlers.NewReuniaoHandler(reuniaoService)
+	authHandler := handlers.NewAuthHandler(authService)
 
 	mux := http.NewServeMux()
 
-	// Endpoints de Clientes
-	mux.HandleFunc("/clientes", func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodPost:
-			clientHandler.Create(w, r)
-		case http.MethodGet:
-			clientHandler.GetAll(w, r)
-		default:
-			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-		}
-	})
-	mux.HandleFunc("/clientes/", func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodGet:
-			clientHandler.GetByID(w, r)
-		case http.MethodPut:
-			clientHandler.Update(w, r)
-		case http.MethodDelete:
-			clientHandler.Delete(w, r)
-		default:
-			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-		}
-	})
+	// --- Middlewares ---
+	authMiddleware := handlers.AuthMiddleware(authService)
+	adminOnly := handlers.RequireRole("Admin")
 
-	// Endpoints de Analistas
-	mux.HandleFunc("/analistas", func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodPost:
-			analistaHandler.Create(w, r)
-		case http.MethodGet:
-			analistaHandler.GetAll(w, r)
-		default:
-			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-		}
-	})
-	mux.HandleFunc("/analistas/", func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodGet:
-			analistaHandler.GetByID(w, r)
-		case http.MethodPut:
-			analistaHandler.Update(w, r)
-		case http.MethodDelete:
-			analistaHandler.Delete(w, r)
-		default:
-			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-		}
-	})
+	// --- Rotas Públicas ---
+	mux.HandleFunc("/auth/register", authHandler.Register)
+	mux.HandleFunc("/auth/login", authHandler.Login)
 
-	// Endpoints de Projetos
-	mux.HandleFunc("/projetos", func(w http.ResponseWriter, r *http.Request) {
+	// --- Rotas Protegidas (Envolvidas individualmente para evitar conflitos de 404) ---
+	
+	// Clientes
+	mux.Handle("/clientes", authMiddleware(http.HandlerFunc(clientHandler.GetAll)))
+	mux.Handle("/clientes/", authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
-		case http.MethodPost:
-			projetoHandler.Create(w, r)
-		case http.MethodGet:
-			projetoHandler.GetAll(w, r)
-		default:
-			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		case http.MethodGet: clientHandler.GetByID(w, r)
+		case http.MethodPut: clientHandler.Update(w, r)
+		case http.MethodDelete: clientHandler.Delete(w, r)
+		default: http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		}
-	})
-	mux.HandleFunc("/projetos/", func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodGet:
-			projetoHandler.GetByID(w, r)
-		case http.MethodPut:
-			projetoHandler.Update(w, r)
-		case http.MethodDelete:
-			projetoHandler.Delete(w, r)
-		default:
-			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-		}
-	})
+	})))
 
-	// Endpoint Dashboard
-	mux.HandleFunc("/dashboard/stats", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
-			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-			return
-		}
-		projetoHandler.GetStats(w, r)
-	})
-
-	// Endpoints de Reuniões
-	mux.HandleFunc("/reunioes", func(w http.ResponseWriter, r *http.Request) {
+	// Analistas
+	mux.Handle("/analistas", authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
-		case http.MethodPost:
-			reuniaoHandler.Create(w, r)
-		case http.MethodGet:
-			reuniaoHandler.GetAll(w, r)
-		default:
+		case http.MethodGet: 
+			usuarioHandler.GetAnalistas(w, r)
+		case http.MethodPost: 
+			adminOnly(http.HandlerFunc(usuarioHandler.CreateAnalista)).ServeHTTP(w, r)
+		default: 
 			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		}
-	})
-	mux.HandleFunc("/reunioes/", func(w http.ResponseWriter, r *http.Request) {
+	})))
+	mux.Handle("/analistas/", authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
-		case http.MethodGet:
-			reuniaoHandler.GetByID(w, r)
-		case http.MethodPut:
-			reuniaoHandler.Update(w, r)
-		case http.MethodDelete:
-			reuniaoHandler.Delete(w, r)
-		default:
+		case http.MethodGet: 
+			usuarioHandler.GetByID(w, r)
+		case http.MethodPut: 
+			adminOnly(http.HandlerFunc(usuarioHandler.UpdateAnalista)).ServeHTTP(w, r)
+		case http.MethodDelete: 
+			adminOnly(http.HandlerFunc(usuarioHandler.Delete)).ServeHTTP(w, r)
+		default: 
 			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		}
-	})
+	})))
 
-	// Aplicar Middleware de CORS
-	handler := corsMiddleware(mux)
+	// Projetos
+	mux.Handle("/projetos", authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet: projetoHandler.GetAll(w, r)
+		case http.MethodPost: projetoHandler.Create(w, r)
+		default: http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		}
+	})))
+	mux.Handle("/projetos/", authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet: projetoHandler.GetByID(w, r)
+		case http.MethodPut: projetoHandler.Update(w, r)
+		case http.MethodDelete: projetoHandler.Delete(w, r)
+		default: http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		}
+	})))
+
+	// Dashboard e Reuniões
+	mux.Handle("/dashboard/stats", authMiddleware(http.HandlerFunc(projetoHandler.GetStats)))
+	mux.Handle("/reunioes", authMiddleware(http.HandlerFunc(reuniaoHandler.GetAll)))
+	mux.Handle("/reunioes/", authMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet: reuniaoHandler.GetByID(w, r)
+		case http.MethodPut: reuniaoHandler.Update(w, r)
+		case http.MethodDelete: reuniaoHandler.Delete(w, r)
+		default: http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		}
+	})))
+
+	// Aplicar Middleware de Recovery e CORS globalmente
+	handler := handlers.RecoveryMiddleware(corsMiddleware(mux))
 
 	srv := &http.Server{
 		Addr:         ":8080",
@@ -197,7 +166,12 @@ func main() {
 
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
+		origin := os.Getenv("CORS_ALLOWED_ORIGIN")
+		if origin == "" {
+			origin = "http://localhost:5173"
+		}
+		
+		w.Header().Set("Access-Control-Allow-Origin", origin)
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 

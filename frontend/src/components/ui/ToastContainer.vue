@@ -13,15 +13,6 @@ const getIcon = (type: string) => {
   }
 }
 
-const getTypeClasses = (type: string) => {
-  switch (type) {
-    case 'success': return 'bg-emerald-50 text-emerald-800 border-emerald-100'
-    case 'error': return 'bg-rose-50 text-rose-800 border-rose-100'
-    case 'warning': return 'bg-amber-50 text-amber-800 border-amber-100'
-    default: return 'bg-blue-50 text-blue-800 border-blue-100'
-  }
-}
-
 const getIconClasses = (type: string) => {
   switch (type) {
     case 'success': return 'text-emerald-500'
@@ -33,29 +24,30 @@ const getIconClasses = (type: string) => {
 </script>
 
 <template>
-  <div class="fixed bottom-6 right-6 z-[100] flex flex-col gap-3 pointer-events-none">
+  <div class="fixed top-6 right-6 z-[100] flex flex-col gap-3 pointer-events-none">
     <TransitionGroup 
       name="toast"
-      enter-active-class="transition duration-300 ease-out"
-      enter-from-class="transform translate-y-4 opacity-0 scale-95"
+      enter-active-class="transition duration-500 ease-apple"
+      enter-from-class="transform translate-y-[-20px] opacity-0 scale-95"
       enter-to-class="transform translate-y-0 opacity-100 scale-100"
-      leave-active-class="transition duration-200 ease-in"
+      leave-active-class="transition duration-300 ease-apple"
       leave-from-class="transform opacity-100 scale-100"
       leave-to-class="transform opacity-0 scale-95"
     >
       <div 
         v-for="toast in toastStore.toasts" 
         :key="toast.id"
-        class="pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg min-w-[320px] max-w-md"
-        :class="getTypeClasses(toast.type)"
+        class="pointer-events-auto flex items-center gap-4 px-5 py-4 rounded-[var(--radius-apple-sm)] bg-[var(--color-surface)] border border-[var(--color-border-soft)] shadow-premium min-w-[340px] max-w-md"
       >
-        <component :is="getIcon(toast.type)" class="w-5 h-5 flex-shrink-0" :class="getIconClasses(toast.type)" />
-        <p class="text-sm font-medium flex-1">{{ toast.message }}</p>
+        <div class="flex-shrink-0">
+          <component :is="getIcon(toast.type)" class="w-5 h-5" :class="getIconClasses(toast.type)" />
+        </div>
+        <p class="text-[14px] font-semibold text-[var(--color-text-primary)] flex-1 leading-tight">{{ toast.message }}</p>
         <button 
           @click="toastStore.removeToast(toast.id)"
-          class="p-1 hover:bg-black/5 rounded-lg transition-colors"
+          class="p-1.5 hover:bg-zinc-100 rounded-full transition-colors group"
         >
-          <X class="w-4 h-4 opacity-50 hover:opacity-100" />
+          <X class="w-4 h-4 text-[var(--color-text-tertiary)] group-hover:text-[var(--color-text-primary)]" />
         </button>
       </div>
     </TransitionGroup>
@@ -63,7 +55,11 @@ const getIconClasses = (type: string) => {
 </template>
 
 <style scoped>
+.ease-apple {
+  transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
 .toast-move {
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 </style>
