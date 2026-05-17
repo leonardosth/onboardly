@@ -48,7 +48,12 @@ watch(() => props.initialData, (newData) => {
 }, { immediate: true })
 
 const submit = () => {
-  emit('save', { ...form.value })
+  const payload = { ...form.value }
+  if (payload.data_contratacao) {
+    // Converte YYYY-MM-DD para ISO string (RFC3339) para compatibilidade com Go time.Time
+    payload.data_contratacao = new Date(`${payload.data_contratacao}T00:00:00Z`).toISOString()
+  }
+  emit('save', payload)
 }
 
 defineExpose({ submit })

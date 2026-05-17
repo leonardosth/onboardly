@@ -4,12 +4,13 @@ import { useToastStore } from '../../stores/toastStore'
 import { 
   Bold, Italic, Underline, Strikethrough, Code, Link as LinkIcon, 
   List, ListOrdered, Quote, Image as ImageIcon, Table as TableIcon,
-  CheckCircle2, Clock, XCircle, Loader2, Plus, Save, CalendarDays, Package
+  CheckCircle2, Clock, XCircle, Loader2, Plus, Save, CalendarDays, Package, User
 } from 'lucide-vue-next'
 import { reuniaoService } from '../../services/reuniaoService'
 import { projectService } from '../../services/projectService'
 import { clientService } from '../../services/clientService'
-import type { Reuniao, Projeto, Cliente } from '../../types'
+import { analistaService } from '../../services/analistaService'
+import type { Reuniao, Projeto, Cliente, Analista } from '../../types'
 
 import SlideOver from '../../components/ui/SlideOver.vue'
 import ReuniaoForm from '../../components/forms/ReuniaoForm.vue'
@@ -18,6 +19,7 @@ const toastStore = useToastStore()
 const meetings = ref<Reuniao[]>([])
 const projects = ref<Record<string, Projeto>>({})
 const clients = ref<Record<string, Cliente>>({})
+const analistas = ref<Record<string, Analista>>({})
 const isLoading = ref(true)
 const selectedMeetingId = ref<string | null>(null)
 
@@ -33,15 +35,17 @@ const selectedMeeting = computed(() => {
 const fetchData = async () => {
   isLoading.value = true
   try {
-    const [meetingsData, projectsData, clientsData] = await Promise.all([
+    const [meetingsData, projectsData, clientsData, analistasData] = await Promise.all([
       reuniaoService.getAll(),
       projectService.getAll(),
-      clientService.getAll()
+      clientService.getAll(),
+      analistaService.getAll()
     ])
     
     meetings.value = meetingsData
     projects.value = projectsData.reduce((acc, p) => { acc[p.id] = p; return acc }, {} as Record<string, Projeto>)
     clients.value = clientsData.reduce((acc, c) => { acc[c.id] = c; return acc }, {} as Record<string, Cliente>)
+    analistas.value = analistasData.reduce((acc, a) => { acc[a.id] = a; return acc }, {} as Record<string, Analista>)
 
     if (meetingsData.length > 0 && !selectedMeetingId.value) {
       selectedMeetingId.value = meetingsData[0].id
@@ -208,6 +212,15 @@ onMounted(fetchData)
                 <span class="text-[11px] font-bold uppercase tracking-widest">Projeto Relacionado</span>
               </div>
               <p class="text-sm font-bold text-[var(--color-text-primary)] font-mono">ID: {{ selectedMeeting.projeto_id.substring(0,8) }}...</p>
+            </div>
+            <div class="space-y-1.5">
+              <div class="flex items-center gap-2 text-[var(--color-text-tertiary)]">
+                <User class="w-4 h-4" />
+                <span class="text-[11px] font-bold uppercase tracking-widest">Analista Responsável</span>
+              </div>
+              <p class="text-sm font-bold text-[var(--color-text-primary)]">
+                {{ analistas[selectedMeeting.analista_id]?.nome || 'Não atribuído' }}
+              </p>
             </div>
           </div>
         </div>

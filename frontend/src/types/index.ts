@@ -49,6 +49,7 @@ export interface LoginRequest {
 export interface Reuniao {
   id: string;
   projeto_id: string;
+  analista_id: string;
   data_agendada: string;
   status: 'Agendada' | 'Realizada' | 'Remarcada' | 'No_Show';
   observacoes: string;

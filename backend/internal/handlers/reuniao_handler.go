@@ -5,6 +5,8 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/leonardosth/onboardly/internal/models"
 	"github.com/leonardosth/onboardly/internal/service"
 )
@@ -22,6 +24,20 @@ func (h *ReuniaoHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&re); err != nil {
 		respondJSON(w, http.StatusBadRequest, map[string]string{"error": "Payload inválido"})
 		return
+	}
+
+	// Se analista_id não foi enviado, tenta pegar do token JWT
+	if re.AnalistaID == uuid.Nil {
+		val := r.Context().Value(UserContextKey)
+		if val != nil {
+			if claims, ok := val.(*jwt.MapClaims); ok {
+				if sub, ok := (*claims)["sub"].(string); ok {
+					if id, err := uuid.Parse(sub); err == nil {
+						re.AnalistaID = id
+					}
+				}
+			}
+		}
 	}
 
 	err := h.service.Create(r.Context(), &re)
