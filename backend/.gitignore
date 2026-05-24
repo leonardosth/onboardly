@@ -9,7 +9,9 @@
 # Test binary, test logs, and coverage reports
 *.test
 *.out
+coverage
 coverage.txt
+coverage.html
 
 # Environment variables (Crucial to protect DB credentials)
 .env

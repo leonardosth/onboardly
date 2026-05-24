@@ -7,9 +7,20 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# Dependencies
+node_modules/
+
+# Production build outputs
+dist/
+dist-ssr/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Local env files (secrets)
+.env
+.env.*
+!.env.example
 *.local
 
 # Editor directories and files

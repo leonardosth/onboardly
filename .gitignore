@@ -1,0 +1,65 @@
+# ==========================================
+# Root .gitignore for Onboardly Project
+# ==========================================
+
+# OS-specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# IDEs, Editors, and Workspace configurations
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+*.swo
+.project
+.classpath
+.settings/
+.buildpath
+
+# Academic/LaTeX Build Files (e.g. for reports in the repository)
+avaliação_n2_arquitetura/
+*.aux
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+*.toc
+*.lof
+*.lot
+*.out
+*.blg
+*.bbl
+*.run.xml
+*-blx.bib
+
+# Local Environment Variables & Secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# Node/Frontend Global Fallbacks (if ran outside of frontend folder)
+node_modules/
+dist/
+dist-ssr/
+*.tsbuildinfo
+
+# Go/Backend Global Fallbacks (if ran outside of backend folder)
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+coverage
+coverage.html
